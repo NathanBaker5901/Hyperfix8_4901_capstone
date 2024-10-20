@@ -14,12 +14,9 @@ Carlos Garcia -> GreenLanturn1796
 
 # Instaling Ubuntu virtual machine
 
-1. Go into google and search up "virtual box" in the search bar it should be oracle virutual box.
-2. Go the website and click "install virtual box 6.1" to install the vitrual box. DISCLAMER -> the version might be newer but the process should be the same.
-3. After you installed the virual box. Go into the URL type in "https://ubuntu.com/download/desktop" .
-4. Once you are in the website click on 22.04 LTS to download the ubuntu OS.
-5. NOT FINISHED
+https://www.youtube.com/watch?v=DhVjgI57Ino&t=516s
 
+Go through the video step by step to install Ubuntu on the vitrual machine.
 
 # Installing Kivy
 
