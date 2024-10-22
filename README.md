@@ -17,6 +17,12 @@ Carlos Garcia -> GreenLanturn1796
 
 
 
+# Instaling Ubuntu virtual machine
+
+https://www.youtube.com/watch?v=DhVjgI57Ino&t=516s
+
+Go through the video step by step to install Ubuntu on the vitrual machine.
+
 # Installing Kivy
 
 1. In Vscode terminal type in the command line "pip install kivy[full]" to install the full kivy package

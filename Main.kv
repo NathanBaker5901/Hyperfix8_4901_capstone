@@ -1,0 +1,56 @@
+ScreenManager:
+    FrontPage:
+    SettingsPage:
+    CameraPage:
+    ManualPage:
+
+<FrontPage>:
+    name: 'front_page'
+    BoxLayout: 
+        orientation: 'vertical'
+        Label:
+            text: 'Welcome to the Title Page'
+            font_size: 20
+        Button:
+            text: 'Go to settings page'
+            on_press: app.root.current = 'settings_page'
+        Button:
+            text: 'Go to camera page'
+            on_press: app.root.current = 'camera_page'
+        Button:
+            text: 'Go to camera page'
+            on_press: app.root.current = 'camera_page'
+
+<SettingsPage>:
+    name: 'settings_page'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Welcome to the settings page'
+            font_size: 20
+        Button:
+            text: 'go to front page'
+            on_press: app.root.current = 'front_page'
+
+<CameraPage>:
+    name: 'camera_page'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Welcome to the camera page'
+            font_size: 20
+        Button:
+            text: 'Go to front page'
+            on_press: app.root.current = 'front_page'
+
+
+<ManualPage>:
+    name: 'manual_page'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Welcome to the manual page'
+            font_size: 20
+        Button:
+            text: 'Go to front page'
+            on_press: app.root.current = 'front_page'
