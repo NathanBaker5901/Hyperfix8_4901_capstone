@@ -35,16 +35,11 @@ ScreenManager:
 <CameraPage>:
     name: 'camera_page'
     FloatLayout:
-        Camera:
-            id: camera
-            play: False
-            resolution: (640, 480)
-            size_hint: (1, 0.9)
-            pos_hint: {'x': 0, 'y': 0.1}
         BoxLayout:
             orientation: 'horizontal'
-            size_hint_y: 0.1
-            pos_hint: {'top': 1}
+            size_hint_y: None
+            height: '50dp'
+            pos_hint: {'bottom': 1}
             #Home button
             Button:
                 text: 'Go to front page'

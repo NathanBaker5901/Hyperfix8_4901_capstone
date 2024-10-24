@@ -21,17 +21,21 @@ class SettingsPage(Screen):
     
 #class for the camera page
 class CameraPage(Screen):
+    def __init__(self, **kwargs):
+        super(CameraPage, self).__init__(**kwargs)
+        self.camera = None
 
     # Start camera when entering the camera page
-    def on_enter(self, *args):
-        self.camera = self.ids.camera
-        if not self.camera.play:
-            self.camera.play = True
+    def on_enter(self, *args):        
+        if self.camera is None:
+            self.camera = Camera(play=True, resolution=(640, 480), size_hint=(1, 1), pos_hint={'x': 0, 'y': 0})
+            self.add_widget(self.camera)       
     # Stops camera when leaving page
     def on_leave(self, *args):
-        if self.camera and self.camera.play:
+        if self.camera is not None:
             self.camera.play = False
-
+            self.remove_widget(self.camera)
+            self.camera = None
  
 
 #class for the manual page
