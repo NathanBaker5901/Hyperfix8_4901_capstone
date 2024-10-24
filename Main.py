@@ -21,59 +21,17 @@ class SettingsPage(Screen):
     
 #class for the camera page
 class CameraPage(Screen):
-    #constructor for the camera page
-    def __init__(self, **kwargs):
-        super(CameraPage, self).__init__(**kwargs)
 
-        # Use FloatLayout to position widgets absolutely
-        self.main_layout = FloatLayout()
-
-        # Create the placeholder for the camera
-        self.camera = None
-
-        # Horizontal layout for buttons (Go Home and Gallery)
-        self.button_layout = BoxLayout(orientation='horizontal', size_hint_y=0.125)
-
-        # Button to go back to the front page
-        button_home = Button(text='Go to Home Page')
-        button_home.bind(on_press=self.go_to_home_page)
-        self.button_layout.add_widget(button_home)   
-
-        # Placeholder button for gallery
-        button_gallery = Button(text='Gallery')
-        # No functionality for gallery button as of now
-        self.button_layout.add_widget(button_gallery)
-
-        # Add the button layout to the main layout
-        self.main_layout.add_widget(self.button_layout)
-
-        # Add the main layout to the screen
-        self.add_widget(self.main_layout)
-    
     # Start camera when entering the camera page
     def on_enter(self, *args):
-        if self.camera is None:
-            # Initialize the Camera widget when the user enters the camera page
-            self.camera = Camera(play=True, resolution=(640, 480), size_hint=(1, 0.9), pos_hint={'x': 0, 'y': 0.1})
-            self.main_layout.add_widget(self.camera)  # Add the camera
-
+        self.camera = self.ids.camera
+        if not self.camera.play:
+            self.camera.play = True
     # Stops camera when leaving page
     def on_leave(self, *args):
-        if self.camera is not None:
-            self.camera.play = False  # Stop the camera feed
-            self.main_layout.remove_widget(self.camera)  # Remove the camera widget
-            self.camera = None  # Free up resources
-            # Explicitly attempt to release resources
-            try:
-                self.camera._camera._release_camera()  # For Kivy's internal camera class
-            except AttributeError:
-                print("Explicit camera release not supported by backend")
-            print("Camera stopped and removed")
+        if self.camera and self.camera.play:
+            self.camera.play = False
 
-    # Method to go back to the front page
-    def go_to_home_page(self, instance):
-        self.manager.current = 'front_page'
-        self.on_leave()  # Call on_leave manually to ensure the camera is stopped when navigating away
  
 
 #class for the manual page
