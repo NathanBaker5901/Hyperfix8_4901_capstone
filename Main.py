@@ -5,7 +5,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen #for the screen manager
 from kivy.uix.label import Label # for the label like headers 
 from kivy.uix.widget import Widget # adds widget for each of the classes
 from kivy.graphics import Color, Ellipse # adds color to the circle
-from kivy.core.window import Window 
+from kivy.core.window import Window # Sets the background color for app
 #class for the Front page child function of the ScreenManager class imported above
 class FrontPage(Screen, Widget):
     #constructor for the front page screen
@@ -30,6 +30,8 @@ class MainApp(App, Widget):
 
     #function for the root of the of the widgets where the apps UI will be added 
     def build(self):
+        # Sets the background color blue based off the wireframe
+        Window.clearcolor = (0/255, 82/255, 163/255, 1)
         sm = ScreenManager()
 
         #add the pages to the screen manager    
