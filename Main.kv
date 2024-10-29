@@ -18,8 +18,8 @@ ScreenManager:
             text: 'Go to camera page'
             on_press: app.root.current = 'camera_page'
         Button:
-            text: 'Go to camera page'
-            on_press: app.root.current = 'camera_page'
+            text: 'Go to manual page'
+            on_press: app.root.current = 'manual_page'
 
 <SettingsPage>:
     name: 'settings_page'
@@ -34,15 +34,20 @@ ScreenManager:
 
 <CameraPage>:
     name: 'camera_page'
-    BoxLayout:
-        orientation: 'vertical'
-        Label:
-            text: 'Welcome to the camera page'
-            font_size: 20
-        Button:
-            text: 'Go to front page'
-            on_press: app.root.current = 'front_page'
-
+    FloatLayout:
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: '50dp'
+            pos_hint: {'bottom': 1}
+            #Home button
+            Button:
+                text: 'Go to front page'
+                on_press: app.root.current = 'front_page'
+            #gallery button
+            Button:
+                text: 'Gallery button'
+                on_press: root.open_gallery()
 
 <ManualPage>:
     name: 'manual_page'
