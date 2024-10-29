@@ -1,5 +1,6 @@
 #:kivy 1.0
 
+
 ScreenManager:
     FrontPage:
     SettingsPage:
@@ -38,13 +39,6 @@ ScreenManager:
             #shrinks the button
             pos_hint: {'center_x': 0.5, 'center_y': 0.3}
             size_hint: (.3, .2)
-
-        Button:
-            text: 'Go to camera page'
-            on_press: app.root.current = 'camera_page'
-        Button:
-            text: 'Go to manual page'
-            on_press: app.root.current = 'manual_page'
 
 <SettingsPage>:
     name: 'settings_page'
@@ -93,7 +87,6 @@ ScreenManager:
             text: 'Go to front page'
             on_press: app.root.current = 'front_page'
 
-
 <RoundedButton@Button>
     background_color: (0,0,0,0)
     background_normal: ''
@@ -118,4 +111,3 @@ ScreenManager:
        # Ellipse:
         #    pos: self.pos  # Draw at the position of the button
          #   size: self.size  # Match the size of the button
-
