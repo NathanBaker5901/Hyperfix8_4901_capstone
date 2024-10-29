@@ -7,6 +7,9 @@ from kivy.uix.boxlayout import BoxLayout # for the layout (there are different t
 from kivy.uix.floatlayout import FloatLayout # for non dynamic layout so the buttons dont move for camera page
 from kivy.uix.screenmanager import ScreenManager, Screen #for the screen manager to track which screen is being shown 
 from kivy.uix.label import Label # for the label like headers 
+from kivy.uix.widget import Widget # adds widget for each of the classes
+from kivy.graphics import Color, Ellipse # adds color to the circle
+from kivy.core.window import Window # Sets the background color for app
 from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
 from kivy.uix.image import Image #Widgets for displaying selected images
@@ -15,14 +18,17 @@ from plyer import filechooser #From plyer library for image selection
 import os #Python module for operating system interactions
 
 #class for the Front page child function of the ScreenManager class imported above
-class FrontPage(Screen):
+class FrontPage(Screen, Widget):
     #constructor for the front page screen
     pass
 
 #class for the settings page
-class SettingsPage(Screen):
+class SettingsPage(Screen, Widget):
     pass
     
+#class for the camera page
+class CameraPage(Screen, Widget):
+    pass
 # Class for the camera page
 class CameraPage(Screen):
     def __init__(self, **kwargs):
@@ -92,16 +98,17 @@ class CameraPage(Screen):
 
             print(f"Image cached at: {cached_image_path}") # Output letting us know the image is in the cache location
 
-
 #class for the manual page
-class ManualPage(Screen):
+class ManualPage(Screen, Widget):
     pass
 
 #main function for the app
-class MainApp(App):
+class MainApp(App, Widget):
 
     #function for the root of the of the widgets where the apps UI will be added 
     def build(self):
+        # Sets the background color blue based off the wireframe
+        Window.clearcolor = (0/255, 82/255, 163/255, 1)
         sm = ScreenManager()
 
         #add the pages to the screen manager    
