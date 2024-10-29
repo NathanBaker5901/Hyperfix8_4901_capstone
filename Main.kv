@@ -39,6 +39,13 @@ ScreenManager:
             pos_hint: {'center_x': 0.5, 'center_y': 0.3}
             size_hint: (.3, .2)
 
+        Button:
+            text: 'Go to camera page'
+            on_press: app.root.current = 'camera_page'
+        Button:
+            text: 'Go to manual page'
+            on_press: app.root.current = 'manual_page'
+
 <SettingsPage>:
     name: 'settings_page'
     BoxLayout:
@@ -60,6 +67,20 @@ ScreenManager:
         Button:
             text: 'Go to front page'
             on_press: app.root.current = 'front_page'
+    FloatLayout:
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_y: None
+            height: '50dp'
+            pos_hint: {'bottom': 1}
+            #Home button
+            Button:
+                text: 'Go to front page'
+                on_press: app.root.current = 'front_page'
+            #gallery button
+            Button:
+                text: 'Gallery button'
+                on_press: root.open_gallery()
 
 <ManualPage>:
     name: 'manual_page'
