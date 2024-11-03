@@ -42,14 +42,114 @@ ScreenManager:
 
 <SettingsPage>:
     name: 'settings_page'
+
+
+    # TOP LAYOUT SET UP - BACK BUTTON AND SETTINGS BANNER
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            text: 'Welcome to the settings page'
-            font_size: 20
-        Button:
-            text: 'Go to front page'
-            on_press: app.root.current = 'front_page'
+        
+        # SETTING LAYOUT
+        FloatLayout:
+            size_hint_y: None
+            height: '50dp'
+        
+            # BACK BUTTON LAYOUT
+            Button:
+                text: 'Back'
+                size_hint: None, None
+                size: '50dp', '30dp' 
+                pos_hint: {"x": 0, "top": 1}
+                on_release: app.root.current = 'front_page'
+
+            # LABEL
+            Label:
+                text: 'Settings'
+                font_size: app.text_size_labels
+                size_hint_y: None
+                height: '25dp' 
+                pos_hint: {"center_x": 0.5, "top": 1}
+
+
+        # SCROLL SETTINGS SETUP
+        ScrollView:
+            do_scroll_x: False
+            canvas.before:
+                Color:
+                    rgba: 0, 0.25, 0.49, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # SETTING UP SCROLLABLE AREA
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint_y: None
+                height: self.minimum_height
+                
+                # SETTINGS WIDGETS HERE
+                # Text Settings
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: '40dp'
+
+                    Label:
+                        text: "Text Size"
+                        font_size: app.text_size_default_font
+                        size_hint_y: None
+                        size_hint_x: 0.4
+                        height: '40dp'
+                    
+                    Button:
+                        text: "Small"
+                        font_size: app.text_size_default_font
+                        size_hint_x: 0.2
+                        on_release: app.set_font_size('Small')
+                    
+                    Button:
+                        text: "Default"
+                        font_size: app.text_size_default_font
+                        size_hint_x: 0.2
+                        on_release: app.set_font_size('Default')
+
+                    Button:
+                        text: "Large"
+                        font_size: app.text_size_default_font
+                        size_hint_x: 0.2
+                        on_release: app.set_font_size('Large')
+                
+                #COLORBLIND WIDGET HERE
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint_y: None
+                    height: '40dp'
+
+                    Label:
+                        text: "Color Blind Mode"
+                        font_size: app.text_size_default_font
+                        size_hint_y: None
+                        height: '40dp'
+
+                    Button:
+                        id: color_blind_button
+                        text: 'Default'
+                        font_size: app.text_size_default_font
+                        size_hint_y: None
+                        height: '40dp'
+
+
+
+                Label:
+                    text: "Summary Text-To-Speech"
+                    font_size: app.text_size_default_font
+                    size_hint_y: None
+                    height: '40dp'
+                Label:
+                    text: 'About Us'
+                    font_size: app.text_size_labels
+                    size_hint_y: None
+                    height: '25dp' 
+                    pos_hint: {"center_x": 0.5, "top": 1}
 
 <CameraPage>:
     name: 'camera_page'

@@ -2,18 +2,20 @@ from kivy.config import Config
 Config.set('kivy', 'camera', 'opencv')
 
 from kivy.app import App 
+from kivy.lang import Builder #building files correctly
 from kivy.uix.button import Button #for the buttons
 from kivy.uix.boxlayout import BoxLayout # for the layout (there are different types of layouts in kivy this is just the most basic one)
 from kivy.uix.floatlayout import FloatLayout # for non dynamic layout so the buttons dont move for camera page
 from kivy.uix.screenmanager import ScreenManager, Screen #for the screen manager to track which screen is being shown 
 from kivy.uix.label import Label # for the label like headers 
 from kivy.uix.widget import Widget # adds widget for each of the classes
+from kivy.uix.dropdown import DropDown # adds dropdown widgets
 from kivy.graphics import Color, Ellipse # adds color to the circle
 from kivy.core.window import Window # Sets the background color for app
 from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
 from kivy.uix.image import Image #Widgets for displaying selected images
-from kivy.uix.label import Label #Text label widget
+from kivy.properties import NumericProperty # control text values
 from plyer import filechooser #From plyer library for image selection
 import os #Python module for operating system interactions
 
@@ -104,6 +106,22 @@ class ManualPage(Screen, Widget):
 
 #main function for the app
 class MainApp(App, Widget):
+    # text sizes, labels and regular font
+    # Settings page will update sizes
+    text_size_labels = NumericProperty(18)
+    text_size_default_font = NumericProperty(14)
+
+    #Function for font size
+    def set_font_size(self, size):
+        if size == 'Small':
+            self.text_size_default_font = 10
+            self.text_size_labels = 14
+        elif size == 'Default':
+            self.text_size_default_font = 14
+            self.text_size_labels = 18
+        elif size == 'Large':
+            self.text_size_default_font = 20
+            self.text_size_labels = 24
 
     #function for the root of the of the widgets where the apps UI will be added 
     def build(self):
@@ -119,6 +137,40 @@ class MainApp(App, Widget):
 
         #return the screen manager
         return sm
+    
+    # Set up the dropdown menu for color blind
+    def on_start(self):
+            settings_screen = self.root.get_screen('settings_page')
+            color_blind_button = settings_screen.ids.color_blind_button
+
+            # Creating Dropdown and adding options
+            dropdown = DropDown()
+            color_blind_button.bind(on_release=lambda btn: self.open_dropdown(dropdown, btn))
+
+    def open_dropdown(self, dropdown, button):
+        # Clear the dropdown each time before opening
+        dropdown.clear_widgets()
+
+        # Define all possible options
+        options = ["Default", "Protanopia", "Deuteranopia", "Tritanopia"]
+
+        # Add only options that are not the current selection
+        for option in options:
+            if option != button.text:
+                btn = Button(text=option, size_hint_y=None, height='40dp')
+                btn.font_size = self.text_size_default_font
+                btn.bind(on_release=lambda btn: self.select_dropdown_option(dropdown, button, btn.text))
+                dropdown.add_widget(btn)
+
+        # Open the dropdown
+        dropdown.open(button)
+
+    def select_dropdown_option(self, dropdown, button, selected_option):
+        # Set the button text to the selected option
+        button.text = selected_option
+
+        # Dismiss the dropdown
+        dropdown.dismiss()
 
 #run the app
 if __name__ == '__main__':
