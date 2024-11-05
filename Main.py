@@ -1,3 +1,4 @@
+import cv2
 from kivy.config import Config
 Config.set('kivy', 'camera', 'opencv')
 
@@ -13,8 +14,9 @@ from kivy.core.window import Window # Sets the background color for app
 from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
 from kivy.uix.image import Image #Widgets for displaying selected images
-from kivy.uix.label import Label #Text label widget
 from plyer import filechooser #From plyer library for image selection
+from PIL import Image as PILImage
+from PIL import ImageDraw, ImageFont
 import os #Python module for operating system interactions
 
 #class for the Front page child function of the ScreenManager class imported above
@@ -25,17 +27,16 @@ class FrontPage(Screen, Widget):
 #class for the settings page
 class SettingsPage(Screen, Widget):
     pass
-    
-#class for the camera page
-class CameraPage(Screen, Widget):
+
+# Class for the Image popup
+class ImagePopup(Popup):
     pass
 # Class for the camera page
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
         self.camera = None # For camera
-        self.image_cache = None  # Cache to store selected image
-        self.analyze_button = None  # Analyze button
+        self.image_cache = None
 
     # Start camera when entering the camera page (DO NOT want the camera on at all times)
     def on_enter(self, *args):        
@@ -60,27 +61,10 @@ class CameraPage(Screen):
         if selection:
             # Cache for the selected image
             self.image_cache = selection[0] 
-
-            # Create a popup for the image
-            popup_content = FloatLayout()
-
-            # Image widget to display selected image
-            img = Image(source=selection[0], allow_stretch=True, size_hint=(1, 0.8), pos_hint={'x': 0, 'y': 0.2})
-            popup_content.add_widget(img)
-
-            # Close button on top right for the popup
-            close_button = Button(text="X", size_hint=(None, None), size=(40, 40), pos_hint={'right': 0.98, 'top': 0.98})
-            close_button.bind(on_press=lambda *x: popup.dismiss())
-            popup_content.add_widget(close_button)
-
-            # Analyze button within selected image
-            self.analyze_button = Button(text="Analyze", size_hint=(None, None), size=(100, 50), pos_hint={'center_x': 0.5, 'y': 0.05})
-            self.analyze_button.bind(on_press=self.cache_image)
-            popup_content.add_widget(self.analyze_button)
-
-            # Create and open the popup
-            popup = Popup(title='Selected Image', content=popup_content, size_hint=(0.8, 0.8))
-            popup.open()
+            #create/open popup using image_popup id from the .kv file
+            image_popup = ImagePopup()
+            image_popup.ids.img.source = self.image_cache
+            image_popup.open()
 
     # Cache the selected image (This will save items in cache in theory we will use the cache as the location to send the image to the machine learning function)
     def cache_image(self, instance):
