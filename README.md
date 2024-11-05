@@ -37,3 +37,4 @@ Go through the video step by step to install Ubuntu on the vitrual machine.
 1. In Vscode terminal type in the command line "pip install kivy[full]" to install the full kivy package
 2. In Vscode terminal type in the command line "pip install opencv-python"
 3. In Vscode terminal type in the command line "pip install plyer"
+4. In Vscode terminal type in the command line "pip intall --upgrade pip"

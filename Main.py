@@ -10,7 +10,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen #for the screen manager
 from kivy.uix.label import Label # for the label like headers 
 from kivy.uix.widget import Widget # adds widget for each of the classes
 from kivy.uix.dropdown import DropDown # adds dropdown widgets
-from kivy.graphics import Color, Ellipse # adds color to the circle
+from kivy.graphics import Color, Ellipse, Rectangle # adds color to the circle
 from kivy.core.window import Window # Sets the background color for app
 from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
@@ -267,18 +267,21 @@ class MainApp(App, Widget):
     def get_color(self, color_name):
         return self.colors[self.current_scheme].get(color_name)
     
+    #Function to update settings page color elements
+    #will probably need to update this name and add all elements across app
     def update_settings_page_colors(self, color_scheme):
 
         #Control for updating elements of ui (SETTINGS ONLY RN)
         settings_screen = self.root.get_screen('settings_page')
+
+        #Setting Page element updates
         settings_screen.ids.back_button.background_color = color_scheme["Text Color"]
         settings_screen.ids.back_button.color = color_scheme["Border Color"]
         settings_screen.ids.settings_label.color = color_scheme["Text Color"]
-        settings_screen.ids.scroll_canvas_color = color_scheme["Background Color"]
         settings_screen.ids.color_blind_button.background_color = color_scheme["Non-Selected Color"]
         settings_screen.ids.color_blind_button.color = color_scheme["Text Color"]
 
-        #Update Text Size button colors
+        #Update Text Size Selected/Non-selected buttons
         for size, btn_id in zip(['Small', 'Default', 'Large'], ["text_size_small", "text_size_default", "text_size_large"]):
             button = settings_screen.ids.get(btn_id)
             if button:
