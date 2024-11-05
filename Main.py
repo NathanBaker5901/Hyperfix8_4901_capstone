@@ -16,6 +16,7 @@ from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
 from kivy.uix.image import Image #Widgets for displaying selected images
 from kivy.properties import NumericProperty, StringProperty # control text values
+from kivy.utils import get_color_from_hex # color translating from hex to rgba
 from plyer import filechooser #From plyer library for image selection
 import os #Python module for operating system interactions
 
@@ -43,6 +44,7 @@ Contributions: Any additional contributions such as icon usage or images used
 
 Our Mission: Fill in with summary of our mission and apps purpose"""
     )
+
     pass
     
 #class for the camera page
@@ -125,25 +127,80 @@ class ManualPage(Screen, Widget):
 class MainApp(App, Widget):
     # text sizes, labels and regular font
     # Settings page will update sizes
-    text_size_labels = NumericProperty(18)
+    text_size_labels = NumericProperty(24)
     text_size_default_font = NumericProperty(14)
+    current_scheme = "Default" #setting color scheme
+    current_font_size = "Default" #track current selected font size
 
     #Function for font size
     def set_font_size(self, size):
         if size == 'Small':
             self.text_size_default_font = 10
             self.text_size_labels = 14
+            self.current_font_size = size  # Update the current font size
+            self.update_settings_page_colors(self.colors[self.current_scheme])  # Refresh button colors
         elif size == 'Default':
             self.text_size_default_font = 14
             self.text_size_labels = 24
+            self.current_font_size = size  # Update the current font size
+            self.update_settings_page_colors(self.colors[self.current_scheme])  # Refresh button colors
         elif size == 'Large':
             self.text_size_default_font = 20
             self.text_size_labels = 28
+            self.current_font_size = size  # Update the current font size
+            self.update_settings_page_colors(self.colors[self.current_scheme])  # Refresh button colors
+
+    #COLOR DEFINITIONS FOR COLORBLIND MODE
+    #USING get_color_from_hex (currently testing)
+    colors = {
+        "Default": {
+            "Main Color": get_color_from_hex("#0052A3"),
+            "Selected Box Color": get_color_from_hex("#0051a3"),
+            "Non-Selected Color": get_color_from_hex("#002447"),
+            "Background Color": get_color_from_hex("#00407e"),
+            "Highlight Box Color": get_color_from_hex("#ff0000"),
+            "Text Color": get_color_from_hex("#FFFFFF"),
+            "Border Color": get_color_from_hex("#000000"),
+        },
+        "Protanopia": {
+            "Main Color": get_color_from_hex("#2451A0"),
+            "Selected Box Color": get_color_from_hex("#2451A0"),
+            "Non-Selected Color": get_color_from_hex("#2151A0"),
+            "Background Color": get_color_from_hex("#182747"),
+            "Highlight Box Color": get_color_from_hex("#8F7E1E"),
+            "Text Color": get_color_from_hex("#FFFFFF"),
+            "Border Color": get_color_from_hex("#000000"),
+        },
+        "Deuteranopia": {
+            "Main Color": get_color_from_hex("#005693"),
+            "Selected Box Color": get_color_from_hex("#005592"),
+            "Non-Selected Color": get_color_from_hex("#002947"),
+            "Background Color": get_color_from_hex("#004475"),
+            "Highlight Box Color": get_color_from_hex("#A17800"),
+            "Text Color": get_color_from_hex("#FFFFFF"),
+            "Border Color": get_color_from_hex("#000000"),
+        },
+        "Tritanopia": {
+            "Main Color": get_color_from_hex("#005D63"),
+            "Selected Box Color": get_color_from_hex("#005C62"),
+            "Non-Selected Color": get_color_from_hex("#002D2F"),
+            "Background Color": get_color_from_hex("#004A4E"),
+            "Highlight Box Color": get_color_from_hex("#FD1700"),
+            "Text Color": get_color_from_hex("#FFFFFF"),
+            "Border Color": get_color_from_hex("#000000"),
+        }
+    }
+
+    #Function for color schemeing pages
+    def apply_color_scheme(self, mode):
+        self.current_scheme = mode
+
+        # Sets the main color blue based off the wireframe
+        Window.clearcolor = self.get_color("Main Color")
 
     #function for the root of the of the widgets where the apps UI will be added 
     def build(self):
-        # Sets the background color blue based off the wireframe
-        Window.clearcolor = (0/255, 82/255, 163/255, 1)
+        
         sm = ScreenManager()
 
         #add the pages to the screen manager    
@@ -152,11 +209,18 @@ class MainApp(App, Widget):
         sm.add_widget(CameraPage(name='camera_page'))
         sm.add_widget(ManualPage(name='manual_page'))
 
+        self.apply_color_scheme("Default") #Setting color scheme as default
+
         #return the screen manager
         return sm
     
     # Set up the dropdown menu for color blind
     def on_start(self):
+            
+            #setting selected button for text size
+            self.update_settings_page_colors(self.colors[self.current_scheme])
+
+            #setting color blind button and selection
             settings_screen = self.root.get_screen('settings_page')
             color_blind_button = settings_screen.ids.color_blind_button
 
@@ -170,12 +234,18 @@ class MainApp(App, Widget):
 
         # Define all possible options
         options = ["Default", "Protanopia", "Deuteranopia", "Tritanopia"]
+        
+        # Standardize the button text to match keys in the dictionary
+        current_scheme = button.text.strip().capitalize()  # Standardize capitalization
 
         # Add only options that are not the current selection
         for option in options:
             if option != button.text:
-                btn = Button(text=option, size_hint_y=None, height='40dp')
-                btn.font_size = self.text_size_default_font
+                btn = Button(text=option, size_hint_y=None, height='40dp', font_size=self.text_size_default_font)
+                btn.background_color = self.colors[current_scheme].get("Non-Selected Color")
+                btn.color = self.colors[current_scheme].get("Text Color")
+
+                #Bind selection action
                 btn.bind(on_release=lambda btn: self.select_dropdown_option(dropdown, button, btn.text))
                 dropdown.add_widget(btn)
 
@@ -188,6 +258,32 @@ class MainApp(App, Widget):
 
         # Dismiss the dropdown
         dropdown.dismiss()
+
+        # Apply the new color scheme
+        self.apply_color_scheme(selected_option)
+        self.update_settings_page_colors(self.colors[selected_option])
+
+    #Function to pull current color scheme and colors
+    def get_color(self, color_name):
+        return self.colors[self.current_scheme].get(color_name)
+    
+    def update_settings_page_colors(self, color_scheme):
+
+        #Control for updating elements of ui (SETTINGS ONLY RN)
+        settings_screen = self.root.get_screen('settings_page')
+        settings_screen.ids.back_button.background_color = color_scheme["Text Color"]
+        settings_screen.ids.back_button.color = color_scheme["Border Color"]
+        settings_screen.ids.settings_label.color = color_scheme["Text Color"]
+        settings_screen.ids.scroll_canvas_color = color_scheme["Background Color"]
+        settings_screen.ids.color_blind_button.background_color = color_scheme["Non-Selected Color"]
+        settings_screen.ids.color_blind_button.color = color_scheme["Text Color"]
+
+        #Update Text Size button colors
+        for size, btn_id in zip(['Small', 'Default', 'Large'], ["text_size_small", "text_size_default", "text_size_large"]):
+            button = settings_screen.ids.get(btn_id)
+            if button:
+                button.background_color = color_scheme["Selected Box Color"] if size == self.current_font_size else color_scheme["Non-Selected Color"]
+                button.color = color_scheme["Text Color"]
 
 #run the app
 if __name__ == '__main__':
