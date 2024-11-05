@@ -4,19 +4,21 @@ Config.set('kivy', 'camera', 'opencv')
 
 from kivy.app import App 
 from kivy.uix.button import Button #for the buttons
+from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout # for the layout (there are different types of layouts in kivy this is just the most basic one)
 from kivy.uix.floatlayout import FloatLayout # for non dynamic layout so the buttons dont move for camera page
 from kivy.uix.screenmanager import ScreenManager, Screen #for the screen manager to track which screen is being shown 
 from kivy.uix.label import Label # for the label like headers 
 from kivy.uix.widget import Widget # adds widget for each of the classes
 from kivy.graphics import Color, Ellipse # adds color to the circle
+from kivy.graphics.texture import Texture #used for OpenCV image data
 from kivy.core.window import Window # Sets the background color for app
 from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
 from kivy.uix.image import Image #Widgets for displaying selected images
 from plyer import filechooser #From plyer library for image selection
-from PIL import Image as PILImage
-from PIL import ImageDraw, ImageFont
+from PIL import Image as PILImage #Python Image Library
+from PIL import ImageDraw, ImageFont #Python Image Library
 import os #Python module for operating system interactions
 
 #class for the Front page child function of the ScreenManager class imported above
@@ -28,6 +30,7 @@ class FrontPage(Screen, Widget):
 class SettingsPage(Screen, Widget):
     pass
 
+#Builder.load_file('Main.kv')
 # Class for the Image popup
 class ImagePopup(Popup):
     pass
@@ -40,6 +43,7 @@ class CameraPage(Screen):
 
     # Start camera when entering the camera page (DO NOT want the camera on at all times)
     def on_enter(self, *args):        
+        
         if self.camera is None:
             self.camera = Camera(play=True, resolution=(640, 480), size_hint=(1, 1), pos_hint={'x': 0, 'y': 0})
             self.add_widget(self.camera)  
