@@ -1,114 +1,119 @@
-from kivy.config import Config
-Config.set('kivy', 'camera', 'opencv')
-
 from kivy.app import App 
 from kivy.uix.button import Button #for the buttons
 from kivy.uix.boxlayout import BoxLayout # for the layout (there are different types of layouts in kivy this is just the most basic one)
-from kivy.uix.floatlayout import FloatLayout # for non dynamic layout so the buttons dont move for camera page
 from kivy.uix.screenmanager import ScreenManager, Screen #for the screen manager to track which screen is being shown 
 from kivy.uix.label import Label # for the label like headers 
-from kivy.uix.widget import Widget # adds widget for each of the classes
-from kivy.graphics import Color, Ellipse # adds color to the circle
-from kivy.core.window import Window # Sets the background color for app
-from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
-from kivy.uix.popup import Popup #For dialog window for popups when needed
-from kivy.uix.image import Image #Widgets for displaying selected images
-from kivy.uix.label import Label #Text label widget
-from plyer import filechooser #From plyer library for image selection
-import os #Python module for operating system interactions
 
 #class for the Front page child function of the ScreenManager class imported above
-class FrontPage(Screen, Widget):
+class FrontPage(Screen):
+
     #constructor for the front page screen
-    pass
+    def __init__(self, **kwargs): 
+        super(FrontPage, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+        
+        #add a label to the screen
+        self.label = Label(text = "Welcome to the Title Page", font_size = 20)
+        layout.add_widget(self.label)
+
+        #make a buttons to go to the setting page, camera page, and the manual page
+        button_settings = Button(text = 'go to settings page')
+        button_settings.bind(on_press = self.go_to_settings_page)
+        layout.add_widget(button_settings)
+
+        button_camera = Button(text = 'go to camera page')
+        button_camera.bind(on_press = self.go_to_camera_page)
+        layout.add_widget(button_camera)
+
+        button_manual = Button(text = 'go to manual page')
+        button_manual.bind(on_press = self.go_to_manual_page)
+        layout.add_widget(button_manual)
+
+        #add the layout to the screen 
+        self.add_widget(layout)
+    
+    #child functions for the buttons to go to the settings page, camera page, and the manual page
+    def go_to_settings_page(self, instance):
+        self.manager.current = 'settings_page'
+    
+    def go_to_camera_page(self, instance):
+        self.manager.current = 'camera_page'
+
+    def go_to_manual_page(self, instance):
+        self.manager.current = 'manual_page'
 
 #class for the settings page
-class SettingsPage(Screen, Widget):
-    pass
+class SettingsPage(Screen):
     
+    #constructor for the settings page
+    def __init__(self, **kwargs):
+        super(SettingsPage, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+
+        #add a label to the screen
+        self.label = Label(text= "Welcome to the Settings Page", font_size=20)
+        layout.add_widget(self.label)
+        
+        #make a button to go to the home page
+        button_home = Button(text = 'go to home page')
+        button_home.bind(on_press = self.go_to_home_page)
+        layout.add_widget(button_home)
+
+        self.add_widget(layout)
+    
+    #code to go back to the front page 
+    def go_to_home_page(self, instance):
+        self.manager.current = 'front_page'
+
 #class for the camera page
-class CameraPage(Screen, Widget):
-    pass
-# Class for the camera page
 class CameraPage(Screen):
+
+    #constructor for the camera page
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
-        self.camera = None # For camera
-        self.image_cache = None  # Cache to store selected image
-        self.analyze_button = None  # Analyze button
+        layout = BoxLayout(orientation='vertical')
 
-    # Start camera when entering the camera page (DO NOT want the camera on at all times)
-    def on_enter(self, *args):        
-        if self.camera is None:
-            self.camera = Camera(play=True, resolution=(640, 480), size_hint=(1, 1), pos_hint={'x': 0, 'y': 0})
-            self.add_widget(self.camera)  
+        #add a label to the screen
+        self.label = Label(text= "Welcome to the Camera Page", font_size=20)
+        layout.add_widget(self.label)
+       
+        #make a button to go to the home page
+        button_home = Button(text = 'go to home page')
+        button_home.bind(on_press = self.go_to_home_page)
+        layout.add_widget(button_home)
+        self.add_widget(layout)
 
-    # Stops camera when leaving camera page (stops the camera to free resources and makes sure its closed down when using app)
-    def on_leave(self, *args):
-        if self.camera is not None:
-            self.camera.play = False
-            self.remove_widget(self.camera)
-            self.camera = None
-    
-    # Function that opens gallery (Works on windows should translate well to android according to kivy.org)
-    def open_gallery(self, *args):
-        # Opens the file chooser to select images
-        filechooser.open_file(on_selection=self.display_image)
- 
-    # Display the selected image in a popup
-    def display_image(self, selection):
-        if selection:
-            # Cache for the selected image
-            self.image_cache = selection[0] 
-
-            # Create a popup for the image
-            popup_content = FloatLayout()
-
-            # Image widget to display selected image
-            img = Image(source=selection[0], allow_stretch=True, size_hint=(1, 0.8), pos_hint={'x': 0, 'y': 0.2})
-            popup_content.add_widget(img)
-
-            # Close button on top right for the popup
-            close_button = Button(text="X", size_hint=(None, None), size=(40, 40), pos_hint={'right': 0.98, 'top': 0.98})
-            close_button.bind(on_press=lambda *x: popup.dismiss())
-            popup_content.add_widget(close_button)
-
-            # Analyze button within selected image
-            self.analyze_button = Button(text="Analyze", size_hint=(None, None), size=(100, 50), pos_hint={'center_x': 0.5, 'y': 0.05})
-            self.analyze_button.bind(on_press=self.cache_image)
-            popup_content.add_widget(self.analyze_button)
-
-            # Create and open the popup
-            popup = Popup(title='Selected Image', content=popup_content, size_hint=(0.8, 0.8))
-            popup.open()
-
-    # Cache the selected image (This will save items in cache in theory we will use the cache as the location to send the image to the machine learning function)
-    def cache_image(self, instance):
-        # Checks if cache location exists
-        if self.image_cache: # Cache location does exist
-            cache_dir = './image_cache' # Saves image in cache
-            if not os.path.exists(cache_dir): # Cache location does not exist
-                os.mkdir(cache_dir) # Creates cache location if not
-
-            # Selects a location/path for the cached image 
-            cached_image_path = os.path.join(cache_dir, 'cached_image.png')
-            with open(self.image_cache, 'rb') as source_file:
-                with open(cached_image_path, 'wb') as dest_file:
-                    dest_file.write(source_file.read())
-
-            print(f"Image cached at: {cached_image_path}") # Output letting us know the image is in the cache location
+    #code to go back to the front page
+    def go_to_home_page(self, instance):
+        self.manager.current = 'front_page'     
 
 #class for the manual page
-class ManualPage(Screen, Widget):
-    pass
+class ManualPage(Screen):
+
+    #constructor for the manual page
+    def __init__(self, **kwargs):
+        super(ManualPage, self).__init__(**kwargs)
+        layout = BoxLayout(orientation='vertical')
+
+        #add a label to the screen
+        self.label = Label(text= "Welcome to the Manual Page", font_size=20)
+        layout.add_widget(self.label)
+
+        #make a button to go to the home page
+        button_home = Button(text = 'go to home page')
+        button_home.bind(on_press = self.go_to_home_page)
+        layout.add_widget(button_home)
+        self.add_widget(layout)
+    
+    #code to go back to the front page
+    def go_to_home_page(self, instance):
+        self.manager.current = 'front_page'
 
 #main function for the app
-class MainApp(App, Widget):
+class MainApp(App):
 
     #function for the root of the of the widgets where the apps UI will be added 
     def build(self):
-        # Sets the background color blue based off the wireframe
-        Window.clearcolor = (0/255, 82/255, 163/255, 1)
         sm = ScreenManager()
 
         #add the pages to the screen manager    
