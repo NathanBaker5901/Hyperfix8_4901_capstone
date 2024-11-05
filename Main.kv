@@ -15,7 +15,7 @@ ScreenManager:
         orientation: 'vertical'
 
         Label:
-            text: 'Welcome to Block Lens'
+            text: 'Block Lens'
             font_size: 50
             pos_hint: {'center_y': 0.7}
             # Will add font style to the title
@@ -138,18 +138,26 @@ ScreenManager:
                         height: '40dp'
 
 
-
                 Label:
                     text: "Summary Text-To-Speech"
                     font_size: app.text_size_default_font
                     size_hint_y: None
                     height: '40dp'
+                
                 Label:
                     text: 'About Us'
                     font_size: app.text_size_labels
                     size_hint_y: None
                     height: '25dp' 
                     pos_hint: {"center_x": 0.5, "top": 1}
+                Label:
+                    text: root.about_us_text
+                    font_size: app.text_size_default_font
+                    size_hint_y: None
+                    text_size: self.width, None
+                    halign: 'left'
+                    valign: 'top'
+                    height: self.texture_size[1]
 
 <CameraPage>:
     name: 'camera_page'

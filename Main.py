@@ -15,17 +15,34 @@ from kivy.core.window import Window # Sets the background color for app
 from kivy.uix.camera import Camera  #Kivy's built-in Camera widget
 from kivy.uix.popup import Popup #For dialog window for popups when needed
 from kivy.uix.image import Image #Widgets for displaying selected images
-from kivy.properties import NumericProperty # control text values
+from kivy.properties import NumericProperty, StringProperty # control text values
 from plyer import filechooser #From plyer library for image selection
 import os #Python module for operating system interactions
+
+#SETTING WINDOW SIZE FOR NOW YOU CAN COMMENT THIS OUT TO TURN IT OFF
+Window.size = (412, 915) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
+Window.resizable = False   #Locking resize window for desktop purposes
 
 #class for the Front page child function of the ScreenManager class imported above
 class FrontPage(Screen, Widget):
     #constructor for the front page screen
     pass
 
-#class for the settings page
+#class for the settings page 
 class SettingsPage(Screen, Widget):
+    
+    #ABOUT US PAGE TEXT
+    about_us_text = StringProperty(
+        """Version: Beta 1.0.0
+
+Features: List of features here
+
+Authors: Nathan Baker, Carlos Garcia, Joel Hunt, Abel Montoya, Andres Montoya
+
+Contributions: Any additional contributions such as icon usage or images used
+
+Our Mission: Fill in with summary of our mission and apps purpose"""
+    )
     pass
     
 #class for the camera page
@@ -118,10 +135,10 @@ class MainApp(App, Widget):
             self.text_size_labels = 14
         elif size == 'Default':
             self.text_size_default_font = 14
-            self.text_size_labels = 18
+            self.text_size_labels = 24
         elif size == 'Large':
             self.text_size_default_font = 20
-            self.text_size_labels = 24
+            self.text_size_labels = 28
 
     #function for the root of the of the widgets where the apps UI will be added 
     def build(self):
