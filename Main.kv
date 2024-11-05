@@ -1,6 +1,5 @@
 #:kivy 1.0
 
-
 ScreenManager:
     FrontPage:
     SettingsPage:
@@ -68,6 +67,30 @@ ScreenManager:
                 text: 'Gallery button'
                 on_press: root.open_gallery()
 
+#popup to display uploaded images
+<ImagePopup>:
+    size_hint: None, None
+    size: 1000, 600
+    FloatLayout:
+        Image:
+            id: img
+            allow_stretch: True
+            size_hint: 1, 0.8
+            pos_hint: {'x': 0, 'y': 0.2}
+        #button to close out of image display
+        Button: 
+            text: "X"
+            size_hint: None, None
+            size: 40, 40
+            pos_hint: {'right': 0.98, 'top': 0.98}
+            on_press: root.dismiss() #close popup
+        #button to analyze the photo
+        Button: 
+            text: "Analyze"
+            size_hint: None, None
+            size: 100, 50
+            pos_hint: {'center_x': 0.5, 'y': 0.05}
+            on_press: app.root.get_screen('camera_page').cache_image(self)
 <ManualPage>:
     name: 'manual_page'
     BoxLayout:
