@@ -26,8 +26,8 @@ from PIL import ImageDraw, ImageFont #Python Image Library
 import os #Python module for operating system interactions
 
 #SETTING WINDOW SIZE FOR NOW YOU CAN COMMENT THIS OUT TO TURN IT OFF
-Window.size = (412, 915) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
-Window.resizable = False   #Locking resize window for desktop purposes
+#Window.size = (412, 900) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
+#Window.resizable = False   #Locking resize window for desktop purposes
 
 #class for the Front page child function of the ScreenManager class imported above
 class FrontPage(Screen, Widget):

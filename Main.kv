@@ -23,22 +23,19 @@ ScreenManager:
             on_press: app.root.current = 'settings_page'
             #shrinks the button and adjust the button based on x axis and y axis
             pos_hint: {'center_x': 0.2, 'center_y': 0.5}
-            # Adjust the sizes of the circle
-            size_hint: (.3, .2)
-            
+            size: 200, 200
         RoundedButton:
             text: 'Go to camera page'
             on_press: app.root.current = 'camera_page'
             #shrinks the button
             pos_hint: {'center_x': 0.8, 'center_y': 0.5}
-            size_hint: (.3, .2)
+            size: 200, 200
         RoundedButton:
             text: 'Go to manual page'
             on_press: app.root.current = 'manual_page'
             #shrinks the button
             pos_hint: {'center_x': 0.5, 'center_y': 0.3}
-            size_hint: (.3, .2)
-
+            size: 200, 200
 <SettingsPage>:
     name: 'settings_page'
 
@@ -236,6 +233,8 @@ ScreenManager:
             on_press: app.root.current = 'front_page'
 
 <RoundedButton@Button>
+    size_hint: None, None #prevent resizing
+    size: 200, 200
     background_color: (0,0,0,0)
     background_normal: ''
     canvas.before:
@@ -245,17 +244,4 @@ ScreenManager:
         RoundedRectangle:
             size: self.size
             pos: self.pos
-            radius: [500]
-
-#Replaces the regular button with a circular button
-#<CircularButton@Button>:
-    #size_hint: None, None  # Remove size constraints from layout
- #   size: 100, 100  # Set size (width = height for a perfect circle)
-  #  background_normal: ''  # Remove default background image
-   # background_color: 0.0, 0.32, 0.64, 1  # Color for 0052A3(blue)
-    #canvas.before:
-     #   Color:
-      #      rgba: 0.2, 0.6, 0.86, 1  # Same color as background_color
-       # Ellipse:
-        #    pos: self.pos  # Draw at the position of the button
-         #   size: self.size  # Match the size of the button
+            radius: [self.height / 2]
