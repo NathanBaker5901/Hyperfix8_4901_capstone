@@ -23,7 +23,9 @@ from kivy.utils import get_color_from_hex # color translating from hex to rgba
 from plyer import filechooser #From plyer library for image selection
 from PIL import Image as PILImage #Python Image Library
 from PIL import ImageDraw, ImageFont #Python Image Library
+from kivy.clock import Clock #Used to capture frames form OpenCV Camera
 import os #Python module for operating system interactions
+import numpy as np #Used for handling image data from OpenCV's numpy arrays
 
 #SETTING WINDOW SIZE FOR NOW YOU CAN COMMENT THIS OUT TO TURN IT OFF
 Window.size = (412, 915) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
@@ -60,53 +62,100 @@ class ImagePopup(Popup):
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
-        self.camera = None # For camera
+        self.cap = None  # OpenCV VideoCapture
         self.image_cache = None
+        self.frame_event = None
+        self.current_frame = None # Captures the current frame
 
-    # Start camera when entering the camera page (DO NOT want the camera on at all times)
-    def on_enter(self, *args):        
-        
-        if self.camera is None:
-            self.camera = Camera(play=True, resolution=(640, 480), size_hint=(1, 1), pos_hint={'x': 0, 'y': 0})
-            self.add_widget(self.camera)  
+    # Start OpenCV camera when user is in the camera page
+    def on_enter(self, *args):
+        self.start_opencv_camera()
 
-    # Stops camera when leaving camera page (stops the camera to free resources and makes sure its closed down when using app)
+    # Stop OpenCV camera when user exits the camera page
     def on_leave(self, *args):
-        if self.camera is not None:
-            self.camera.play = False
-            self.remove_widget(self.camera)
-            self.camera = None
-    
-    # Function that opens gallery (Works on windows should translate well to android according to kivy.org)
+        if self.cap:
+            self.cap.release()  # Release the camera
+            cv2.destroyAllWindows()
+            print("Camera has been released.")
+
+        if self.frame_event:
+            self.frame_event.cancel()  # Cancel frame update
+
+    # Start OpenCV camera
+    def start_opencv_camera(self):
+        self.cap = cv2.VideoCapture(0)  # Useing camera index 0 for default camera
+        if not self.cap.isOpened():
+            print("Error: Could not open OpenCV camera")
+        else:
+            print("OpenCV camera started.")
+            # Schedule the update of camera frames by 30 FPS
+            self.frame_event = Clock.schedule_interval(self.update_camera_feed, 1.0 / 30.0)
+
+    # Update the Image widget with the camera feed
+    def update_camera_feed(self, dt):
+        if self.cap:
+            ret, frame = self.cap.read()
+            if ret:
+                self.current_frame = frame  # Store the current frame
+                # Convert BGR frame to RGB
+                buf = cv2.flip(frame, 0).tostring()
+                texture = Texture.create(size=(frame.shape[1], frame.shape[0]), colorfmt='bgr')
+                texture.blit_buffer(buf, colorfmt='bgr', bufferfmt='ubyte')
+                self.ids.camera_feed.texture = texture
+
+    # Capture image using the current frame from OpenCV
+    def capture_opencv_image(self):
+        if self.current_frame is not None:
+            # Convert OpenCV frame (BGR) to PIL Image (RGB)
+            pil_image = PILImage.fromarray(cv2.cvtColor(self.current_frame, cv2.COLOR_BGR2RGB))
+
+            # Save to cache directory
+            cache_dir = './image_cache'
+            if not os.path.exists(cache_dir):
+                os.mkdir(cache_dir)
+            cached_image_path = os.path.join(cache_dir, 'captured_image.png')
+            pil_image.save(cached_image_path)
+            self.image_cache = cached_image_path
+
+            print(f"Image captured and cached at: {cached_image_path}")
+        else:
+            print("Error: No frame available to capture")
+
+    # Function that opens gallery works for windows and should work for android
     def open_gallery(self, *args):
         # Opens the file chooser to select images
         filechooser.open_file(on_selection=self.display_image)
- 
+
     # Display the selected image in a popup
     def display_image(self, selection):
         if selection:
             # Cache for the selected image
-            self.image_cache = selection[0] 
-            #create/open popup using image_popup id from the .kv file
+            self.image_cache = selection[0]
+            # Create/open popup
             image_popup = ImagePopup()
             image_popup.ids.img.source = self.image_cache
             image_popup.open()
 
-    # Cache the selected image (This will save items in cache in theory we will use the cache as the location to send the image to the machine learning function)
+    # Cache the selected image
     def cache_image(self, instance):
         # Checks if cache location exists
-        if self.image_cache: # Cache location does exist
-            cache_dir = './image_cache' # Saves image in cache
-            if not os.path.exists(cache_dir): # Cache location does not exist
-                os.mkdir(cache_dir) # Creates cache location if not
+        if self.image_cache:
+            cache_dir = './image_cache'  # Cache directory
+            if not os.path.exists(cache_dir):
+                os.mkdir(cache_dir)  # Create cache location if does not existing
 
-            # Selects a location/path for the cached image 
+            # Select a location/path for the cached image
             cached_image_path = os.path.join(cache_dir, 'cached_image.png')
-            with open(self.image_cache, 'rb') as source_file:
-                with open(cached_image_path, 'wb') as dest_file:
-                    dest_file.write(source_file.read())
+            try:
+                with open(self.image_cache, 'rb') as source_file:
+                    with open(cached_image_path, 'wb') as dest_file:
+                        dest_file.write(source_file.read())
 
-            print(f"Image cached at: {cached_image_path}") # Output letting us know the image is in the cache location
+                print(f"Image cached at: {cached_image_path}")
+            except Exception as e:
+                print(f"Error caching the image: {e}")
+        else:
+            print("Error: No image selected for caching")
 
 #class for the manual page
 class ManualPage(Screen, Widget):
