@@ -183,21 +183,31 @@ ScreenManager:
 <CameraPage>:
     name: 'camera_page'
     FloatLayout:
+        Image:
+            id: camera_feed
+            size_hint: (1, 0.8)
+            pos_hint: {'x': 0, 'top': 1}
+        
+        Button:
+            text: 'Capture'
+            size_hint: (0.3, 0.1)
+            pos_hint: {'center_x': 0.5, 'y': 0.2}
+            on_press: root.capture_opencv_image()
+
         BoxLayout:
             orientation: 'horizontal'
             size_hint_y: None
             height: '50dp'
             pos_hint: {'bottom': 1}
-            #Home button
+
             Button:
                 text: 'Go to front page'
                 on_press: app.root.current = 'front_page'
-            #gallery button
+
             Button:
-                text: 'Gallery button'
+                text: 'Gallery'
                 on_press: root.open_gallery()
 
-#popup to display uploaded images
 <ImagePopup>:
     size_hint: None, None
     size: 1000, 600
