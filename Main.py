@@ -1,6 +1,7 @@
 import cv2
-from kivy.config import Config
-Config.set('kivy', 'camera', 'opencv')
+#from kivy.config import Config
+#Config.set('kivy', 'camera', 'opencv')
+
 
 from kivy.app import App 
 from kivy.lang import Builder #building files correctly
@@ -28,8 +29,8 @@ import os #Python module for operating system interactions
 import numpy as np #Used for handling image data from OpenCV's numpy arrays
 
 #SETTING WINDOW SIZE FOR NOW YOU CAN COMMENT THIS OUT TO TURN IT OFF
-Window.size = (412, 915) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
-Window.resizable = False   #Locking resize window for desktop purposes
+#Window.size = (412, 900) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
+#Window.resizable = False   #Locking resize window for desktop purposes
 
 #class for the Front page child function of the ScreenManager class imported above
 class FrontPage(Screen, Widget):
@@ -59,9 +60,11 @@ Our Mission: Fill in with summary of our mission and apps purpose"""
 class ImagePopup(Popup):
     pass
 # Class for the camera page
+
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
+    '''
         self.cap = None  # OpenCV VideoCapture
         self.image_cache = None
         self.frame_event = None
@@ -156,7 +159,7 @@ class CameraPage(Screen):
                 print(f"Error caching the image: {e}")
         else:
             print("Error: No image selected for caching")
-
+'''
 #class for the manual page
 class ManualPage(Screen, Widget):
     pass
@@ -244,7 +247,7 @@ class MainApp(App, Widget):
         #add the pages to the screen manager    
         sm.add_widget(FrontPage(name='front_page'))
         sm.add_widget(SettingsPage(name='settings_page'))
-        sm.add_widget(CameraPage(name='camera_page'))
+        #sm.add_widget(CameraPage(name='camera_page'))
         sm.add_widget(ManualPage(name='manual_page'))
 
         self.apply_color_scheme("Default") #Setting color scheme as default
@@ -329,4 +332,3 @@ class MainApp(App, Widget):
 #run the app
 if __name__ == '__main__':
     MainApp().run()
-
