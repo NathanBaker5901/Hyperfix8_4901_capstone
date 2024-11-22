@@ -24,7 +24,12 @@ Email:CarlosGarcia9@my.untdallas.edu
 
 Carlos Garcia -> GreenLanturn1796
 
+Name: Joel Hunt
+EUID: jh1249
+Institution: University of North Texas
+Email: joelhunt2@my.unt.edu
 
+Joel Hunt -> joelrhunt
 
 # Instaling Ubuntu virtual machine
 
