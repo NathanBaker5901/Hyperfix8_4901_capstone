@@ -235,12 +235,21 @@ ScreenManager:
     name: 'manual_page'
     BoxLayout:
         orientation: 'vertical'
+
         Label:
             text: 'Welcome to the manual page'
             font_size: 20
+        # BACK BUTTON LAYOUT
         Button:
-            text: 'Go to front page'
-            on_press: app.root.current = 'front_page'
+            id: back_button
+            text: 'Back'
+            background_color: app.get_color("Text Color")  # White background for button
+            color: app.get_color("Border Color") #black text for button
+            border: app.get_color("Border Color")
+            size_hint: None, None
+            size: '50dp', '30dp' 
+            pos_hint: {"x": 0, "top": 1}
+            on_release: app.root.current = 'front_page'
 
 <RoundedButton@Button>
     size_hint: None, None #prevent resizing
