@@ -247,7 +247,7 @@ class MainApp(App, Widget):
         #add the pages to the screen manager    
         sm.add_widget(FrontPage(name='front_page'))
         sm.add_widget(SettingsPage(name='settings_page'))
-        #sm.add_widget(CameraPage(name='camera_page'))
+        sm.add_widget(CameraPage(name='camera_page'))
         sm.add_widget(ManualPage(name='manual_page'))
 
         self.apply_color_scheme("Default") #Setting color scheme as default
