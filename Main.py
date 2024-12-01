@@ -1,6 +1,7 @@
 import cv2
-from kivy.config import Config
-Config.set('kivy', 'camera', 'opencv')
+#from kivy.config import Config
+#Config.set('kivy', 'camera', 'opencv')
+
 
 from kivy.app import App 
 from kivy.lang import Builder #building files correctly
@@ -59,9 +60,11 @@ Our Mission: Fill in with summary of our mission and apps purpose"""
 class ImagePopup(Popup):
     pass
 # Class for the camera page
+
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
+    
         self.cap = None  # OpenCV VideoCapture
         self.image_cache = None
         self.frame_event = None
@@ -329,4 +332,3 @@ class MainApp(App, Widget):
 #run the app
 if __name__ == '__main__':
     MainApp().run()
-
