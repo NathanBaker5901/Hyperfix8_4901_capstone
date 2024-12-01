@@ -64,7 +64,7 @@ class ImagePopup(Popup):
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
-    '''
+    
         self.cap = None  # OpenCV VideoCapture
         self.image_cache = None
         self.frame_event = None
@@ -159,7 +159,7 @@ class CameraPage(Screen):
                 print(f"Error caching the image: {e}")
         else:
             print("Error: No image selected for caching")
-'''
+
 #class for the manual page
 class ManualPage(Screen, Widget):
     pass
