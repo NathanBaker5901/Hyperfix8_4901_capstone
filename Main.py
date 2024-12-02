@@ -1,7 +1,4 @@
 import cv2
-#from kivy.config import Config
-#Config.set('kivy', 'camera', 'opencv')
-
 
 from kivy.app import App 
 from kivy.lang import Builder #building files correctly
@@ -78,7 +75,7 @@ class CameraPage(Screen):
     def on_leave(self, *args):
         if self.cap:
             self.cap.release()  # Release the camera
-            cv2.destroyAllWindows()
+            
             print("Camera has been released.")
 
         if self.frame_event:
