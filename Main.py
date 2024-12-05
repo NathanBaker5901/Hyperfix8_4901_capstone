@@ -162,6 +162,28 @@ class CameraPage(Screen):
 
 #class for the manual page
 class ManualPage(Screen, Widget):
+
+    #DESCRIPTION OF MANUAL
+    Manual_text_Description = StringProperty(
+        """
+        Thank you for using this app!!!!
+        This manual description is to explain how the user should properly use the app.
+
+        1. Before you capture a lego piece have a white clear surface on your table and make sure the room is well lit.
+
+        2. Once the setup is complete take a picture from an angle. Refer to Figure to 1 for more clarfication for the picture.
+
+        NOTE: If you have a picture already then instead of chossing to take a picture choose the gallery option select the picture.
+        """
+    )
+
+    #DESCRIPTION FIGURE 1
+    Manual_Figure1 = StringProperty(
+        """
+        Figure 1: Example of Lego Picture
+        
+        """
+    )
     pass
 
 #main function for the app
@@ -173,6 +195,27 @@ class MainApp(App, Widget):
     current_scheme = "Default" #setting color scheme
     current_font_size = "Default" #track current selected font size
 
+    color_mode = "Default" # Sets the color mode to default 
+
+    def apply_color_to_label(self, instance):
+        # Access the label from the 'settings_page'
+        settings_screen = self.root.get_screen('settings_page')
+        label = settings_screen.ids.protanopia_label
+
+        # Change the label's color to yellow (Protanopia-specific color)
+        label.color = 236 / 255.0, 230 / 255.0, 45 / 255.0, 1  # RGBA for yellow (#ECE62D)
+    
+    # Function to get the color for Protanopia -> sets the color to yellow
+    def Protanopia_color(self, instance):
+        self.label.color = (236, 230, 45, 1)  # RGBA for yellow  -> hex #ece62d
+
+    #Function for colors
+    def set_color_text_Protanopia(self, color_mode):
+        if color_mode == 'Protanopia':
+            color_mode  (236,230,45,1) # RGBA for yellow
+        elif color_mode == 'Default':
+            color_mode (0,0,0,1)
+              
     #Function for font size
     def set_font_size(self, size):
         if size == 'Small':

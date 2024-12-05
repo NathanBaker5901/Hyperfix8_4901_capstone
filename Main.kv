@@ -20,6 +20,9 @@ ScreenManager:
             # Will add font style to the title
         RoundedButton:
             text: 'Go to settings page'
+
+            #Testing color changes of text
+            # color: (0,1,0,1)
             on_press: app.root.current = 'settings_page'
             #shrinks the button and adjust the button based on x axis and y axis
             pos_hint: {'center_x': 0.2, 'center_y': 0.5}
@@ -151,9 +154,10 @@ ScreenManager:
                         text: 'Default'
                         font_size: app.text_size_default_font
                         background_color: app.get_color("Non-Selected Color")
-                        color: app.get_color("Text Color")
+                        color: app.get_color("Text Color") if self.state == 'normal' else (1,0,0,1)
                         size_hint_y: None
                         height: '40dp'
+                        
 
 
                 Label:
@@ -235,12 +239,60 @@ ScreenManager:
     name: 'manual_page'
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            text: 'Welcome to the manual page'
-            font_size: 20
-        Button:
-            text: 'Go to front page'
-            on_press: app.root.current = 'front_page'
+        
+        # MANUAL LAYOUT
+        FloatLayout:
+            size_hint_y: None
+            height: '50dp'
+
+            Label:
+                text: 'Welcome to the manual page'
+                font_size: 20
+                pos_hint: {"center_x": 0.5, "top": 12}
+                
+            
+            # Description of Menu
+
+            Label:
+                text: root.Manual_text_Description
+                font_size: app.text_size_default_font
+                color: app.get_color("Text Color")
+                size_hint_y: None
+                text_size: self.width, None
+                halign: 'left'
+                valign: 'top'
+                height: self.texture_size[1]
+                pos_hint: {"center_x": 0.5, "top": 8}
+
+            Label:
+                text: root.Manual_Figure1
+                font_size: app.text_size_default_font
+                color: app.get_color("Text Color")
+                size_hint_y: None
+                text_size: self.width, None
+                halign: 'left'
+                valign: 'top'
+                height: self.texture_size[1]
+                pos_hint: {"center_x": 0.85, "top": 5}
+
+            # Image Display
+            Image:
+                source: './Images/Lego_piece.jpg'  # Replace with your image file path
+                size_hint_y: None
+                height: '200dp'  # Adjust height as needed
+                keep_ratio: True
+
+            # BACK BUTTON LAYOUT
+            Button:
+                id: back_button
+                text: 'Back'
+                background_color: app.get_color("Text Color")  # White background for button
+                color: app.get_color("Border Color") #black text for button
+                border: app.get_color("Border Color")
+                size_hint: None, None
+                size: '50dp', '30dp' 
+                pos_hint: {"x": 0, "top": 12}
+                on_release: app.root.current = 'front_page'
 
 <RoundedButton@Button>
     size_hint: None, None #prevent resizing
