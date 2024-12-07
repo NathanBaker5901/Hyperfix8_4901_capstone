@@ -24,6 +24,15 @@ from PIL import ImageDraw, ImageFont #Python Image Library
 from kivy.clock import Clock #Used to capture frames form OpenCV Camera
 import os #Python module for operating system interactions
 import numpy as np #Used for handling image data from OpenCV's numpy arrays
+from kivy.utils import platform
+
+
+
+if platform == "android":
+
+    from android.permissions import request_permissions, Permission #NOT AN ACTUAL ERROR ON ANDROID
+
+    request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE, Permission.CAMERA, Permission.INTERNET])
 
 #SETTING WINDOW SIZE FOR NOW YOU CAN COMMENT THIS OUT TO TURN IT OFF
 #Window.size = (412, 900) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
