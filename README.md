@@ -31,6 +31,13 @@ Email: joelhunt2@my.unt.edu
 
 Joel Hunt -> joelrhunt
 
+Name: Nathan Baker 
+EUID: njb0131
+Institution: University of North Texas
+Email: NathanBaker@my.unt.edu
+
+Nathan Baker -> NathanBaker5901
+
 # Instaling Ubuntu virtual machine
 
 https://www.youtube.com/watch?v=DhVjgI57Ino&t=516s
