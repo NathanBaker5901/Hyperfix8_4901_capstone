@@ -1,7 +1,4 @@
 import cv2
-#from kivy.config import Config
-#Config.set('kivy', 'camera', 'opencv')
-
 
 from kivy.app import App 
 from kivy.lang import Builder #building files correctly
@@ -27,6 +24,15 @@ from PIL import ImageDraw, ImageFont #Python Image Library
 from kivy.clock import Clock #Used to capture frames form OpenCV Camera
 import os #Python module for operating system interactions
 import numpy as np #Used for handling image data from OpenCV's numpy arrays
+from kivy.utils import platform
+
+
+
+if platform == "android":
+
+    from android.permissions import request_permissions, Permission #NOT AN ACTUAL ERROR ON ANDROID
+
+    request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE, Permission.CAMERA, Permission.INTERNET])
 
 #SETTING WINDOW SIZE FOR NOW YOU CAN COMMENT THIS OUT TO TURN IT OFF
 #Window.size = (412, 900) #Aspect Ratio 20:9 (reflects Google Pixel 9 1080x2424)
@@ -64,7 +70,7 @@ class ImagePopup(Popup):
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
-    
+
         self.cap = None  # OpenCV VideoCapture
         self.image_cache = None
         self.frame_event = None
@@ -78,15 +84,19 @@ class CameraPage(Screen):
     def on_leave(self, *args):
         if self.cap:
             self.cap.release()  # Release the camera
-            cv2.destroyAllWindows()
+            self.cap = None
             print("Camera has been released.")
 
         if self.frame_event:
             self.frame_event.cancel()  # Cancel frame update
+            self.frame_event = None
 
     # Start OpenCV camera
     def start_opencv_camera(self):
-        self.cap = cv2.VideoCapture(0)  # Useing camera index 0 for default camera
+        if self.cap and self.cap.isOpened():
+            print("Camera is already open")
+            return
+        self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
             print("Error: Could not open OpenCV camera")
         else:
