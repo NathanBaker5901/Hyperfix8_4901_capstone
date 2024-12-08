@@ -70,7 +70,7 @@ class ImagePopup(Popup):
 class CameraPage(Screen):
     def __init__(self, **kwargs):
         super(CameraPage, self).__init__(**kwargs)
-    
+
         self.cap = None  # OpenCV VideoCapture
         self.image_cache = None
         self.frame_event = None
@@ -84,15 +84,19 @@ class CameraPage(Screen):
     def on_leave(self, *args):
         if self.cap:
             self.cap.release()  # Release the camera
-            
+            self.cap = None
             print("Camera has been released.")
 
         if self.frame_event:
             self.frame_event.cancel()  # Cancel frame update
+            self.frame_event = None
 
     # Start OpenCV camera
     def start_opencv_camera(self):
-        self.cap = cv2.VideoCapture(0)  # Useing camera index 0 for default camera
+        if self.cap and self.cap.isOpened():
+            print("Camera is already open")
+            return
+        self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
             print("Error: Could not open OpenCV camera")
         else:
