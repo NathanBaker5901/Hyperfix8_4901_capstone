@@ -2,6 +2,8 @@ package com.example.blocklens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -11,88 +13,204 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import coil.compose.rememberAsyncImagePainter
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 
 class MainActivity : ComponentActivity() {
-
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-            if (!isGranted) {
-                Toast.makeText(this, "Camera permission is required", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-    private fun checkCameraPermission(onPermissionGranted: () -> Unit) {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-        } else {
-            onPermissionGranted()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainPage { checkCameraPermission { navigateToCameraPage() } }
+            AppContent()
         }
-    }
-
-    private fun navigateToCameraPage() {
-        // Logic to navigate to the camera page
     }
 }
 
 @Composable
-fun MainPage(navigateToCamera: () -> Unit) {
+fun AppContent() {
+    val context = LocalContext.current
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var currentPage by remember { mutableStateOf("main") }
 
+    // Image picker
+    val pickImageLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            selectedImageUri = uri
+        }
+
+    // Permission check
+    val checkGalleryPermission: () -> Unit = {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+
+        if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+            pickImageLauncher.launch("image/*")
+        } else {
+            Toast.makeText(context, "Gallery permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // Page Navigation
     when (currentPage) {
-        "main" -> {
-            Box(
+        "main" -> MainPage(
+            onOpenManual = { currentPage = "manual" },
+            onOpenCamera = { currentPage = "camera" },
+            onOpenSettings = { currentPage = "settings" }
+        )
+        "camera" -> CameraPage(
+            onBack = { currentPage = "main" },
+            onOpenGallery = checkGalleryPermission
+        )
+        "manual" -> ManualPage { currentPage = "main" }
+        "settings" -> SettingsPage { currentPage = "main" }
+    }
+
+    // Show the pop-up when an image is selected
+    selectedImageUri?.let { uri ->
+        ImagePopUp(uri) { selectedImageUri = null }
+    }
+}
+
+@Composable
+fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Camera Preview
+            AndroidView(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF0033CC)), // Blue background
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Block Lens",
-                        fontSize = 24.sp,
-                        color = Color.White,
-                        textAlign = TextAlign.Center
-                    )
-                    CircleButton("Go to settings page") { /* Navigate to settings */ }
-                    CircleButton("Go to camera page") {
-                        navigateToCamera()
-                        currentPage = "camera"
-                    }
-                    CircleButton("Go to manual page") { /* Navigate to manual */ }
+                    .weight(1f) // Takes up most of the screen
+                    .fillMaxWidth(),
+                factory = { ctx ->
+                    val previewView = PreviewView(ctx)
+                    cameraProviderFuture.addListener({
+                        val cameraProvider = cameraProviderFuture.get()
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                        val preview = androidx.camera.core.Preview.Builder().build()
+                        preview.setSurfaceProvider(previewView.surfaceProvider)
+
+                        cameraProvider.unbindAll()
+                        cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview)
+                    }, ContextCompat.getMainExecutor(ctx))
+                    previewView
                 }
+            )
+
+            // Bottom Bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color.DarkGray)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Back",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    modifier = Modifier.clickable { onBack() }
+                )
+                Text(
+                    "Gallery",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    modifier = Modifier.clickable { onOpenGallery() }
+                )
             }
         }
-        "camera" -> CameraPage(onBackToMain = { currentPage = "main" })
+    }
+}
+
+
+@Composable
+fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.8f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .fillMaxHeight(0.8f)
+                .background(Color.White),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // Close button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                Text(
+                    "X",
+                    color = Color.Red,
+                    fontSize = 18.sp,
+                    modifier = Modifier.clickable { onClose() }
+                )
+            }
+            // Display Image
+            Image(
+                painter = rememberAsyncImagePainter(imageUri),
+                contentDescription = null,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                contentScale = ContentScale.Fit
+            )
+            // Analyze Button
+            Button(
+                onClick = { /* Placeholder for analyze logic */ },
+                modifier = Modifier.padding(8.dp)
+            ) {
+                Text("Analyze")
+            }
+        }
+    }
+}
+
+@Composable
+fun MainPage(onOpenManual: () -> Unit, onOpenCamera: () -> Unit, onOpenSettings: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF0033CC)),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Block Lens", fontSize = 24.sp, color = Color.White)
+        Spacer(modifier = Modifier.height(24.dp))
+        CircleButton("Manual") { onOpenManual() }
+        CircleButton("Camera") { onOpenCamera() }
+        CircleButton("Settings") { onOpenSettings() }
     }
 }
 
@@ -105,103 +223,26 @@ fun CircleButton(text: String, onClick: () -> Unit) {
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = text,
-            fontSize = 14.sp,
-            color = Color.White,
-            textAlign = TextAlign.Center
-        )
+        Text(text, fontSize = 16.sp, color = Color.White)
     }
 }
 
 @Composable
-fun CameraPage(onBackToMain: () -> Unit) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+fun ManualPage(onBack: () -> Unit) = PagePlaceholder("Manual Page", onBack)
+@Composable
+fun SettingsPage(onBack: () -> Unit) = PagePlaceholder("Settings Page", onBack)
 
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-
-    Box(
+@Composable
+fun PagePlaceholder(title: String, onBack: () -> Unit) {
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0033CC)), // Blue background
-        contentAlignment = Alignment.Center
+            .background(Color.White),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Camera Preview
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16 / 9f),
-                factory = { ctx ->
-                    val previewView = PreviewView(ctx)
-
-                    cameraProviderFuture.addListener({
-                        try {
-                            val cameraProvider = cameraProviderFuture.get()
-
-                            // Unbind use cases before rebinding
-                            cameraProvider.unbindAll()
-
-                            // Preview Use Case
-                            val preview = androidx.camera.core.Preview.Builder().build()
-                            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-
-                            // Bind lifecycle and use cases
-                            preview.setSurfaceProvider(previewView.surfaceProvider)
-                            cameraProvider.bindToLifecycle(
-                                lifecycleOwner,
-                                cameraSelector,
-                                preview
-                            )
-                        } catch (e: Exception) {
-                            Log.e("CameraPage", "Camera initialization failed: ${e.message}")
-                        }
-                    }, ContextCompat.getMainExecutor(ctx))
-
-                    previewView
-                }
-            )
-
-            // Capture Button (placeholder)
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 16.dp)
-                    .background(Color.Gray)
-                    .size(120.dp, 50.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Capture", fontSize = 16.sp, color = Color.White)
-            }
-
-            // Navigation Buttons
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                ClickableText(
-                    text = AnnotatedString("Go to front page"),
-                    onClick = { onBackToMain() },
-                    modifier = Modifier
-                        .background(Color.Gray)
-                        .padding(16.dp),
-                    style = TextStyle(color = Color.White, fontSize = 14.sp)
-                )
-                ClickableText(
-                    text = AnnotatedString("Gallery"),
-                    onClick = { /* TODO */ },
-                    modifier = Modifier
-                        .background(Color.Gray)
-                        .padding(16.dp),
-                    style = TextStyle(color = Color.White, fontSize = 14.sp)
-                )
-            }
-        }
+        Text(title, fontSize = 20.sp, color = Color.Black)
+        Spacer(modifier = Modifier.height(16.dp))
+        CircleButton("Back") { onBack() }
     }
 }
