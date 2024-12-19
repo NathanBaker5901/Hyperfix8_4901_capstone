@@ -18,7 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
+//import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +34,7 @@ import coil.compose.rememberAsyncImagePainter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import java.io.File
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -97,6 +98,8 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val imageCapture = remember { androidx.camera.core.ImageCapture.Builder().build() }
+    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -111,10 +114,15 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
                         val cameraProvider = cameraProviderFuture.get()
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
                         val preview = androidx.camera.core.Preview.Builder().build()
-                        preview.setSurfaceProvider(previewView.surfaceProvider)
+                        preview.surfaceProvider = previewView.surfaceProvider
 
                         cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(lifecycleOwner, cameraSelector, preview)
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            preview,
+                            imageCapture
+                        )
                     }, ContextCompat.getMainExecutor(ctx))
                     previewView
                 }
@@ -135,6 +143,39 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
                     fontSize = 16.sp,
                     modifier = Modifier.clickable { onBack() }
                 )
+
+                // Capture Button
+                Box(
+                    modifier = Modifier
+                        .size(70.dp)
+                        .background(Color.White, CircleShape)
+                        .clickable {
+                            val photoFile = File(
+                                context.cacheDir,
+                                "captured_image_${System.currentTimeMillis()}.jpg"
+                            )
+                            val outputOptions = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+                            imageCapture.takePicture(
+                                outputOptions,
+                                ContextCompat.getMainExecutor(context),
+                                object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(outputFileResults: androidx.camera.core.ImageCapture.OutputFileResults) {
+                                        capturedImageUri = Uri.fromFile(photoFile)
+                                    }
+
+                                    override fun onError(exception: androidx.camera.core.ImageCaptureException) {
+                                        Toast.makeText(context, "Failed to capture image", Toast.LENGTH_SHORT).show()
+                                        Log.e("CameraPage", "Image capture failed", exception)
+                                    }
+                                }
+                            )
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("●", fontSize = 40.sp, color = Color.Red)
+                }
+
                 Text(
                     "Gallery",
                     color = Color.White,
@@ -144,7 +185,13 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
             }
         }
     }
+
+    // Show captured image pop-up
+    capturedImageUri?.let { uri ->
+        ImagePopUp(uri) { capturedImageUri = null }
+    }
 }
+
 
 
 @Composable
