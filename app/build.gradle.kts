@@ -47,7 +47,7 @@ android {
 
 dependencies {
     // Material3 (Jetpack Compose)
-    implementation("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.compose.material3:material3:1.3.1")
 
     // Compose Activity
     implementation("androidx.activity:activity-compose:1.7.2")
@@ -56,9 +56,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.2.2")
 
     // CameraX dependencies
-    implementation("androidx.camera:camera-core:1.4.0")
+    implementation("androidx.camera:camera-core:1.4.1")
     implementation("androidx.camera:camera-view:1.4.0")
-    implementation("androidx.camera:camera-lifecycle:1.4.0")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
     implementation("androidx.camera:camera-camera2:1.4.0")
 
     // Compose BOM (Bill of Materials for Compose version alignment)
@@ -67,7 +67,8 @@ dependencies {
     // Core Compose dependencies
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation(project(":sdk"))
 
     // Debugging tools
     debugImplementation("androidx.compose.ui:ui-tooling")
@@ -82,6 +83,9 @@ dependencies {
     // Compose testing dependencies
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // OpenCV dependency
+    implementation(project(":sdk"))
 }
 
 

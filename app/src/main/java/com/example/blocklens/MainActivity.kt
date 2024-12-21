@@ -35,6 +35,28 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import java.io.File
+import org.opencv.android.OpenCVLoader
+import org.opencv.android.Utils
+import org.opencv.core.Mat
+import org.opencv.imgcodecs.Imgcodecs
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
+import java.util.concurrent.Executors
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Rect
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.Paint as ComposePaint
+import androidx.compose.ui.graphics.ImageBitmap
+import android.graphics.BitmapFactory
+import org.opencv.core.MatOfByte
+import org.opencv.imgproc.Imgproc
+import org.opencv.core.Size
+
+
 
 class MainActivity : ComponentActivity() {
 
@@ -67,6 +89,12 @@ class MainActivity : ComponentActivity() {
         }
         setContent {
             AppContent()
+        }
+        // Initialize OpenCV
+        if (OpenCVLoader.initDebug()) {
+            Log.e("OpenCV", "OpenCV initialized successfully")
+        } else {
+            Log.d("OpenCV", "OpenCV initialization failed")
         }
     }
 
@@ -133,6 +161,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { androidx.camera.core.ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var previewBitmap by remember { mutableStateOf<Bitmap?>(null) }  // Changed to Bitmap
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -149,17 +178,32 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
                         val preview = androidx.camera.core.Preview.Builder().build()
                         preview.surfaceProvider = previewView.surfaceProvider
 
+                        val imageAnalysis = ImageAnalysis.Builder()
+                            .build()
+                            .also {
+                                it.setAnalyzer(
+                                    Executors.newSingleThreadExecutor(),
+                                    CustomImageAnalyzer { bitmap ->
+                                        // Convert Bitmap to ImageBitmap on the main thread
+                                        previewBitmap = bitmap
+                                    }
+                                )
+                            }
+
                         cameraProvider.unbindAll()
                         cameraProvider.bindToLifecycle(
                             lifecycleOwner,
                             cameraSelector,
                             preview,
-                            imageCapture
+                            imageCapture,
+                            imageAnalysis
                         )
                     }, ContextCompat.getMainExecutor(ctx))
                     previewView
                 }
             )
+            // Overlay with boxes on the camera preview
+
 
             // Bottom Bar
             Row(
@@ -225,7 +269,47 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
     }
 }
 
+// Custom Image Analyzer for processing camera frames
+class CustomImageAnalyzer(
+    private val onAnalysisResult: (Bitmap) -> Unit
+) : ImageAnalysis.Analyzer {
+    override fun analyze(image: ImageProxy) {
+        // Convert ImageProxy to Bitmap (for image processing with OpenCV)
+        val bitmap = image.toBitmap()
 
+        // Example OpenCV processing: Edge detection
+        val processedBitmap = processWithOpenCV(bitmap)
+
+        // Return the processed bitmap
+        onAnalysisResult(processedBitmap)
+
+        // Close the ImageProxy
+        image.close()
+    }
+
+    // Extension function to convert ImageProxy to Bitmap
+    private fun ImageProxy.toBitmap(): Bitmap {
+        val buffer = this.planes[0].buffer
+        val bytes = ByteArray(buffer.remaining())
+        buffer.get(bytes)
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+    }
+
+    // OpenCV edge detection (simplified)
+    private fun processWithOpenCV(bitmap: Bitmap): Bitmap {
+        val mat = Mat()
+        Utils.bitmapToMat(bitmap, mat)
+
+        // Example OpenCV processing: Edge detection
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_RGB2GRAY)
+        Imgproc.GaussianBlur(mat, mat, org.opencv.core.Size(5.0, 5.0), 0.0)
+        Imgproc.Canny(mat, mat, 100.0, 200.0)
+
+        val resultBitmap = Bitmap.createBitmap(mat.cols(), mat.rows(), Bitmap.Config.ARGB_8888)
+        Utils.matToBitmap(mat, resultBitmap)
+        return resultBitmap
+    }
+}
 
 @Composable
 fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
