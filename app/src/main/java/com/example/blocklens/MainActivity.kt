@@ -37,10 +37,43 @@ import androidx.compose.material3.Text
 import java.io.File
 
 class MainActivity : ComponentActivity() {
+
+    // List permission request for runtime permissions
+    private val requiredPermissions = mutableListOf(
+        Manifest.permission.CAMERA
+    ).apply{
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            add(Manifest.permission.READ_MEDIA_IMAGES)
+        } else {
+            add(Manifest.permission.READ_EXTERNAL_STORAGE)
+        }
+    }
+
+    // Permissions launcher on runtime
+    private val requestPermissionsLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            permissions.forEach { (permission, isGranted) ->
+                if (!isGranted) {
+                    Toast.makeText(this, "Permission denied: $permission", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Check/request permissions
+        if (!hasAllPermissions()) {
+            requestPermissionsLauncher.launch(requiredPermissions.toTypedArray())
+        }
         setContent {
             AppContent()
+        }
+    }
+
+    // Function to check if permissions are granted
+    private fun hasAllPermissions(): Boolean {
+        return requiredPermissions.all {
+            ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
     }
 }
