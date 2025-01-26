@@ -79,6 +79,7 @@ fun BlockLensApp() {
     var currentPage by remember { mutableStateOf("landing") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var openGalleryShortcut by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     // Image picker
@@ -114,7 +115,10 @@ fun BlockLensApp() {
             "landing" -> LandingPage(
                 onNavigateToSettings = { currentPage = "settings" },
                 onNavigateToCamera = { currentPage = "camera" },
-                onNavigateToGallery = { currentPage = "gallery" }
+                onNavigateToGallery = {
+                    openGalleryShortcut = true
+                    currentPage = "camera"
+                }
             )
 
             "settings" -> SettingsPage(
@@ -126,8 +130,18 @@ fun BlockLensApp() {
             )
 
             "camera" -> CameraPage(
-                onBack = { currentPage = "landing" },
-                onOpenGallery = checkGalleryPermission
+                onBack = {
+                    currentPage = "landing"
+                    openGalleryShortcut = false // Reset the shortcut state
+                },
+                onOpenGallery = {
+                    if (openGalleryShortcut) {
+                        checkGalleryPermission()
+                        openGalleryShortcut = false // Reset the shortcut state
+                    } else {
+                        checkGalleryPermission()
+                    }
+                }
             )
 
             "gallery" -> GalleryPage(

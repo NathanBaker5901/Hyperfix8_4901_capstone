@@ -39,6 +39,11 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
     val imageCapture = remember { androidx.camera.core.ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
 
+    // Trigger gallery function automatically if the shortcut is used
+    LaunchedEffect(Unit) {
+        onOpenGallery()
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             AndroidView(
