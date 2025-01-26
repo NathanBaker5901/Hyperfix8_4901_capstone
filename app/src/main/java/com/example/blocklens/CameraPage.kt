@@ -32,16 +32,18 @@ import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.BlockLensTheme
 
 @Composable
-fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
+fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { androidx.camera.core.ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // Trigger gallery function automatically if the shortcut is used
-    LaunchedEffect(Unit) {
-        onOpenGallery()
+    // Trigger the gallery function automatically only if the shortcut is active
+    LaunchedEffect(openGalleryShortcut) {
+        if (openGalleryShortcut) {
+            onOpenGallery()
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

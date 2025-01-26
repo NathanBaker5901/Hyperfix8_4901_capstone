@@ -135,13 +135,9 @@ fun BlockLensApp() {
                     openGalleryShortcut = false // Reset the shortcut state
                 },
                 onOpenGallery = {
-                    if (openGalleryShortcut) {
-                        checkGalleryPermission()
-                        openGalleryShortcut = false // Reset the shortcut state
-                    } else {
-                        checkGalleryPermission()
-                    }
-                }
+                    checkGalleryPermission()
+                },
+                openGalleryShortcut = openGalleryShortcut
             )
 
             "gallery" -> GalleryPage(
