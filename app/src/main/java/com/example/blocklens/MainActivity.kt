@@ -139,9 +139,13 @@ fun BlockLensApp() {
             )
         }
 
-        // Show the pop-up when an image is selected
-        capturedImageUri?.let { uri ->
-            ImagePopUp(uri) { capturedImageUri = null }
+        // Show the pop-up for either captured or selected images
+        val imageUriForPopUp = capturedImageUri ?: selectedImageUri
+        imageUriForPopUp?.let { uri ->
+            ImagePopUp(uri) {
+                capturedImageUri = null
+                selectedImageUri = null
+            }
         }
     }
 }
