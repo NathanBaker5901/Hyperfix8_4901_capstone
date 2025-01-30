@@ -7,6 +7,9 @@ import android.util.Log
 import android.widget.Toast
 
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Image
@@ -27,6 +30,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
 import java.io.File
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.Color
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.BlockLensTheme
@@ -36,7 +41,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val imageCapture = remember { androidx.camera.core.ImageCapture.Builder().build() }
+    val imageCapture = remember { ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -50,7 +55,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                        val preview = androidx.camera.core.Preview.Builder().build()
+                        val preview = Preview.Builder().build()
                         preview.surfaceProvider = previewView.surfaceProvider
 
                         cameraProvider.unbindAll()
@@ -81,23 +86,23 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
                 Box(
                     modifier = Modifier
                         .size(70.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .background(Color.Black, CircleShape)
                         .clickable {
                             val photoFile = File(
                                 context.cacheDir,
                                 "captured_image_${System.currentTimeMillis()}.jpg"
                             )
-                            val outputOptions = androidx.camera.core.ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                            val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
                             imageCapture.takePicture(
                                 outputOptions,
                                 ContextCompat.getMainExecutor(context),
-                                object : androidx.camera.core.ImageCapture.OnImageSavedCallback {
-                                    override fun onImageSaved(outputFileResults: androidx.camera.core.ImageCapture.OutputFileResults) {
+                                object : ImageCapture.OnImageSavedCallback {
+                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                         capturedImageUri = Uri.fromFile(photoFile)
                                     }
 
-                                    override fun onError(exception: androidx.camera.core.ImageCaptureException) {
+                                    override fun onError(exception: ImageCaptureException) {
                                         Toast.makeText(context, "Failed to capture image", Toast.LENGTH_SHORT).show()
                                         Log.e("CameraPage", "Image capture failed", exception)
                                     }
@@ -106,7 +111,11 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
                         },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("●", fontSize = 40.sp, color = MaterialTheme.colorScheme.onPrimary)
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .background(color = Color.White, shape = CircleShape)
+                    )
                 }
 
                 Text(
@@ -125,6 +134,8 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit) {
 
 @Composable
 fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
+    var showBoundingBox by remember { mutableStateOf(false) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -150,17 +161,30 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
                     modifier = Modifier.clickable { onClose() }
                 )
             }
-            Image(
-                painter = rememberAsyncImagePainter(imageUri),
-                contentDescription = null,
+            Box(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxWidth()
-                    .padding(8.dp),
-                contentScale = ContentScale.Fit
-            )
+                    .weight(1f)
+                    .padding(8.dp)
+            ) {
+                Image(
+                    painter = rememberAsyncImagePainter(imageUri),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+                if (showBoundingBox) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 150.dp, height = 200.dp)
+                            .padding(8.dp)
+                            .border(4.dp, Color.Red)
+                            .align(Alignment.Center)
+                    )
+                }
+            }
             Button(
-                onClick = { /* Analyze logic placeholder */ },
+                onClick = { showBoundingBox = true },
                 modifier = Modifier.padding(8.dp)
             ) {
                 Text("Analyze")
