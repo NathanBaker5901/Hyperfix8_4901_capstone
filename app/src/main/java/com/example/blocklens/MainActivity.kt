@@ -8,21 +8,29 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
-import com.example.blocklens.ui.theme.BlockLensTheme
-import androidx.activity.compose.rememberLauncherForActivityResult
 
 
 const val TAG = "BlockLens TEST"
@@ -151,7 +159,7 @@ fun LandingPage(
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit
-) {
+)  {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -164,17 +172,47 @@ fun LandingPage(
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onNavigateToCamera) {
-            Text("Camera", style = MaterialTheme.typography.bodyLarge)
+        Spacer(modifier = Modifier.height(108.dp))
+
+        IconButton(onClick = onNavigateToCamera) {
+            Icon(
+                imageVector = Icons.Default.Camera,
+                contentDescription = "Camera",
+                modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
+                tint = Color.White
+
+            )
         }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onNavigateToGallery) {
-            Text("Gallery", style = MaterialTheme.typography.bodyLarge)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = onNavigateToSettings) {
-            Text("Settings", style = MaterialTheme.typography.bodyLarge)
+
+        Spacer(modifier = Modifier.height(72.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+
+
+            IconButton(onClick = onNavigateToGallery) {
+                Icon(
+                    imageVector = Icons.Default.Photo,
+                    contentDescription = "Gallery",
+                    modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
+                    tint = Color.White
+
+                )
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            IconButton(onClick = onNavigateToSettings) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
+                    tint = Color.White
+
+                )
+            }
         }
     }
 }
