@@ -20,20 +20,29 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
+import com.example.blocklens.ui.theme.getColorScheme
 
 
 const val TAG = "BlockLens TEST"
+
+enum class TextSizeOption {
+    Small, Default, Large
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -121,6 +130,8 @@ fun BlockLensApp() {
     ) {
         when (currentPage) {
             "landing" -> LandingPage(
+                textSizeOption = textSizeOption,
+                colorBlindMode = colorBlindMode,
                 onNavigateToSettings = { currentPage = "settings" },
                 onNavigateToCamera = { currentPage = "camera" },
                 onNavigateToGallery = {
@@ -170,30 +181,54 @@ fun BlockLensApp() {
 
 @Composable
 fun LandingPage(
+    textSizeOption: TextSizeOption,
+    colorBlindMode: ColorBlindMode,
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit
-)  {
+){
+    val colorScheme = getColorScheme(colorBlindMode)
+
+    val fontSize = when (textSizeOption) {
+        TextSizeOption.Small -> 32.sp  // Small text size
+        TextSizeOption.Default -> 48.sp // Default text size
+        TextSizeOption.Large -> 64.sp  // Large text size
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            //.background(Color.White) // Set background color to white
+                .background(
+                Brush.verticalGradient(
+                    colors = listOf(colorScheme.backgroundColor, Color.LightGray)
+                )
+            )
+    ) {
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .padding(16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Block Lens",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
+            style = TextStyle(fontSize = fontSize, fontWeight = FontWeight.Bold),
+            color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
+            )
         Spacer(modifier = Modifier.height(108.dp))
 
-        IconButton(onClick = onNavigateToCamera) {
+        IconButton(
+            onClick = onNavigateToCamera,
+            modifier = Modifier.size(96.dp)
+            ) {
             Icon(
                 imageVector = Icons.Default.Camera,
                 contentDescription = "Camera",
-                modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
-                tint = Color.White
+                modifier = Modifier.fillMaxSize(),
+                tint = colorScheme?.mainColor ?: Color.Red //Set icon to red
 
             )
         }
@@ -206,27 +241,52 @@ fun LandingPage(
         ) {
 
 
-            IconButton(onClick = onNavigateToGallery) {
+            IconButton(
+                onClick = onNavigateToGallery,
+                modifier = Modifier.size(96.dp)
+                ) {
                 Icon(
                     imageVector = Icons.Default.Photo,
                     contentDescription = "Gallery",
-                    modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
-                    tint = Color.White
+                    modifier = Modifier.fillMaxSize(),
+                    tint = colorScheme?.accentColor ?:  Color.White //set icon to yellow
 
                 )
             }
 
             Spacer(modifier = Modifier.height(36.dp))
 
-            IconButton(onClick = onNavigateToSettings) {
+            IconButton(
+                onClick = onNavigateToSettings,
+                modifier = Modifier.size(96.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Settings,
                     contentDescription = "Settings",
-                    modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
-                    tint = Color.White
+                    modifier = Modifier.fillMaxSize(),
+                    tint = colorScheme?.highlightBoxColor ?: Color.Blue //set icon to blue
+
+
 
                 )
             }
         }
     }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Text(
+                text = "© 2024 HyperFix8-Bricked Up",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    color = Color(0xFF333333)
+                )
+            )
+        }
+    }
 }
+
