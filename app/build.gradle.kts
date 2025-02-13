@@ -46,6 +46,9 @@ android {
 }
 
 dependencies {
+    // Object detection
+    implementation("com.google.mlkit:object-detection:17.0.2")
+
     // Material3 (Jetpack Compose)
     implementation("androidx.compose.material3:material3:1.2.0")
 

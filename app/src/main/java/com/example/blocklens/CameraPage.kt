@@ -1,6 +1,7 @@
 package com.example.blocklens
 
 
+import android.graphics.BitmapFactory
 import android.net.Uri
 
 import android.util.Log
@@ -30,11 +31,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
 import java.io.File
+import java.io.InputStream
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Color
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.BlockLensTheme
+
+// mlkit libraries look into live camera
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.objects.ObjectDetection
+import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
+import com.google.mlkit.vision.objects.DetectedObject
 
 @Composable
 fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean) {
@@ -141,8 +149,38 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
 
 @Composable
 fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
-    var showBoundingBox by remember { mutableStateOf(false) }
+    val context = LocalContext.current //get android context(needed to get files)
+    var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList())} //stores list objects detected
+    var showBoundingBox by remember { mutableStateOf(false) } // Controls if the bounding box shows or doesn't
 
+    // will need to change if we want to use live image so a new instance is not created every frame
+    // its okay for now since we are using a static image at the moment.
+    val detectObjects: () -> Unit = {
+        val imageStream: InputStream? = context.contentResolver.openInputStream(imageUri) // open image file
+        val bitmap = BitmapFactory.decodeStream(imageStream) // convert image to bitmap
+        val image = InputImage.fromBitmap(bitmap, 0) // create InputeImage
+
+        // configure mlkit object detector
+        val options = ObjectDetectorOptions.Builder() // create ObjectDetectorOptions object
+            .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE) // set the mode for a single image
+            .enableMultipleObjects() // CAN TURN ON AND OFF TO TEST IF MULTIPLE OBJECTS IS NOT WORKING
+            .enableClassification() // OBJECT RECOGNITION NAMES CAN BE USED FOR TESTING FOR NOW BUT WILL NEED TO REMOVE/CHANGE IN THE FUTURE
+            .build() // build the options
+        
+        val objectDetector = ObjectDetection.getClient(options) // create objectDetector instance using the previous options
+
+        // if successful updates detectedObjects and showBoundingBox
+        objectDetector.process(image)
+            .addOnSuccessListener { objects ->
+                detectedObjects = objects
+                showBoundingBox = objects.isNotEmpty()
+            }
+            // else if it fails log error for MLKit
+            .addOnFailureListener { e ->
+                Log.e("MLKit", "Object detection failed", e)
+            }
+        
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -181,17 +219,32 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
                     contentScale = ContentScale.Fit
                 )
                 if (showBoundingBox) {
-                    Box(
-                        modifier = Modifier
-                            .size(width = 150.dp, height = 200.dp)
-                            .padding(8.dp)
-                            .border(4.dp, Color.Red)
-                            .align(Alignment.Center)
-                    )
+                    detectedObjects.forEach { obj ->
+                        obj.boundingBox.let { box ->
+                            Box(
+                                modifier = Modifier
+                                    .absoluteOffset(x = box.left.dp, y = box.top.dp)
+                                    .size(box.width().dp, box.height().dp)
+                                    .border(2.dp, color = Color.Red)
+                            )
+                            // labels for testing but will most likely need to remove/change in the future when dealing with primarily legos
+                            obj.labels.forEach { label ->
+                                Text(
+                                    text = label.text,
+                                    fontSize = 12.sp,
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .background(Color.Black.copy(alpha = 0.7f))
+                                        .absoluteOffset(x = box.left.dp, y = box.top.dp - 20.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
             Button(
-                onClick = { showBoundingBox = true },
+                onClick = detectObjects,
                 modifier = Modifier.padding(8.dp)
             ) {
                 Text("Analyze")
