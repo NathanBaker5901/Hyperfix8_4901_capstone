@@ -74,5 +74,7 @@ dependencies {
     implementation(libs.androidx.monitor)
     implementation(libs.androidx.junit.ktx)
     testImplementation(libs.junit.junit)
+
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
 }
 
