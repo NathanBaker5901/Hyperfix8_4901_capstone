@@ -186,8 +186,28 @@ fun LandingPage(
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit
-){
+) {
+
+    //Color Gradient
+    val defaultGradientColors = listOf(
+        Color(0xFF0A3D66), // Dark blue
+        Color(0xFF87CEEB)  // Lighter blue
+    )
+    // sets the colorblind modes
     val colorScheme = getColorScheme(colorBlindMode)
+
+    // Define a different gradient for color-blind modes if necessary (for example)
+    val colorBlindGradient = when (colorBlindMode) {
+        ColorBlindMode.Protanopia -> listOf(Color(0xFF7F5F3F), Color(0xFFFFD700))  // Red-green colorblind
+        ColorBlindMode.Deuteranopia -> listOf(Color(0xFF7F5F3F), Color(0xFFFFA500))  // Another red-green variant
+        ColorBlindMode.Tritanopia -> listOf(Color(0xFF003366), Color(0xFFFF66CC))  // Blue-yellow colorblind
+        else -> listOf(Color(0xFF0A3D66), Color(0xFF87CEEB))  // Default gradient (blue to light blue)
+    }
+
+    // Use colorScheme.backgroundColor for color-blind mode, else use the default gradient
+    val backgroundBrush = Brush.verticalGradient(
+        colors = if (colorBlindMode != ColorBlindMode.Default) colorBlindGradient else defaultGradientColors
+    )
 
     val fontSize = when (textSizeOption) {
         TextSizeOption.Small -> 32.sp  // Small text size
@@ -198,95 +218,93 @@ fun LandingPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            //.background(Color.White) // Set background color to white
-                .background(
-                Brush.verticalGradient(
-                    colors = listOf(colorScheme.backgroundColor, Color.LightGray)
-                )
-            )
+            .background(backgroundBrush) // Apply the gradient
     ) {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "Block Lens",
-            style = TextStyle(fontSize = fontSize, fontWeight = FontWeight.Bold),
-            color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
-            )
-        Spacer(modifier = Modifier.height(108.dp))
-
-        IconButton(
-            onClick = onNavigateToCamera,
-            modifier = Modifier.size(96.dp)
-            ) {
-            Icon(
-                imageVector = Icons.Default.Camera,
-                contentDescription = "Camera",
-                modifier = Modifier.fillMaxSize(),
-                tint = colorScheme?.mainColor ?: Color.Red //Set icon to red
-
-            )
-        }
-
-        Spacer(modifier = Modifier.height(72.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-
-
-            IconButton(
-                onClick = onNavigateToGallery,
-                modifier = Modifier.size(96.dp)
-                ) {
-                Icon(
-                    imageVector = Icons.Default.Photo,
-                    contentDescription = "Gallery",
-                    modifier = Modifier.fillMaxSize(),
-                    tint = colorScheme?.accentColor ?:  Color.White //set icon to yellow
-
-                )
-            }
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            IconButton(
-                onClick = onNavigateToSettings,
-                modifier = Modifier.size(96.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    modifier = Modifier.fillMaxSize(),
-                    tint = colorScheme?.highlightBoxColor ?: Color.Blue //set icon to blue
-
-
-
-                )
-            }
-        }
-    }
-
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 16.dp),
-            contentAlignment = Alignment.BottomCenter
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center, // Center everything
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Text(
-                text = "© 2024 HyperFix8-Bricked Up",
-                style = TextStyle(
-                    fontSize = 14.sp,
-                    color = Color(0xFF333333)
-                )
+                "Block Lens",
+                style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
+                color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
             )
+            Spacer(modifier = Modifier.height(48.dp)) // Space below the title
+
+
+            // Gallery Icon (Top Center)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = onNavigateToGallery,
+                    modifier = Modifier.size(96.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Photo,
+                        contentDescription = "Gallery",
+                        modifier = Modifier.fillMaxSize(),
+                        tint = Color.White
+                    )
+                }
+                Text(
+                    "Gallery",
+                    style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    color = Color.White
+                )
+            }
+
+            Spacer(modifier = Modifier.height(64.dp)) // Adjust spacing between Gallery & bottom icons
+
+            // Bottom row containing Camera and Settings icons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f), // Keep them closer to the center
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // Settings Icon (Bottom Left)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        "Settings",
+                        style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        color = Color.White
+                    )
+                }
+
+                // Camera Icon (Bottom Right)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = onNavigateToCamera,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Camera,
+                            contentDescription = "Camera",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        "Camera",
+                        style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }
-
