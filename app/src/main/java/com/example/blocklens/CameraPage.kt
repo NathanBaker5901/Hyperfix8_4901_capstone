@@ -1,8 +1,11 @@
 package com.example.blocklens
 
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.graphics.Matrix
+import androidx.exifinterface.media.ExifInterface
 
 import android.util.Log
 import android.widget.Toast
@@ -34,11 +37,13 @@ import java.io.File
 import java.io.InputStream
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.BlockLensTheme
 
-// mlkit libraries look into live camera
+// mlkit libraries need to look into live camera
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
@@ -152,14 +157,40 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
     val context = LocalContext.current //get android context(needed to get files)
     var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList())} //stores list objects detected
     var showBoundingBox by remember { mutableStateOf(false) } // Controls if the bounding box shows or doesn't
+    var processedImageUri by remember { mutableStateOf<Uri?>(null) } // Stores the URI of the full size image
+    var imageWidth by remember { mutableIntStateOf(1) } //keep track of width for correct scaling
+    var imageHeight by remember { mutableIntStateOf(1) } //keep track of height for correct scaling
+
+
+    //need to rotate the bitmap to the correct orientation
+    fun rotateBitmap(bitmap: Bitmap, angle: Float): Bitmap {
+        val matrix = Matrix()
+        matrix.postRotate(angle) // Rotate by the specified angle
+        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+    }
 
     // will need to change if we want to use live image so a new instance is not created every frame
     // its okay for now since we are using a static image at the moment.
     val detectObjects: () -> Unit = {
         val imageStream: InputStream? = context.contentResolver.openInputStream(imageUri) // open image file
         val bitmap = BitmapFactory.decodeStream(imageStream) // convert image to bitmap
-        val image = InputImage.fromBitmap(bitmap, 0) // create InputeImage
 
+        //**FUTURE IMPLEMENTATION** if we want to implement horizontal screen make sure to make a conditional
+        // statement in order to stop the rotation if the screen orientation is horizontal
+        val rotatedBitmap = rotateBitmap(bitmap, 90f) // rotate image 90 degrees due to the bitmap rotating on vertical
+
+
+        //save a temp for the full size image so the bounding boxes accurately size around the object
+        val tempFile = File(context.cacheDir, "temp_analyzed_image.jpg")
+        tempFile.outputStream().use { out ->
+            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        }
+        processedImageUri = Uri.fromFile(tempFile) //update uri to processed image
+
+        imageWidth = rotatedBitmap.width //update image width
+        imageHeight = rotatedBitmap.height //update image height
+
+        val image = InputImage.fromBitmap(rotatedBitmap, 0)
         // configure mlkit object detector
         val options = ObjectDetectorOptions.Builder() // create ObjectDetectorOptions object
             .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE) // set the mode for a single image
@@ -168,6 +199,10 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
             .build() // build the options
         
         val objectDetector = ObjectDetection.getClient(options) // create objectDetector instance using the previous options
+
+        //Clear previous detected objects to avoid bad results
+        detectedObjects = emptyList()
+        showBoundingBox = false
 
         // if successful updates detectedObjects and showBoundingBox
         objectDetector.process(image)
@@ -212,19 +247,31 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
                     .weight(1f)
                     .padding(8.dp)
             ) {
+               // Show the processed image if availiable otherwise keep original
+                val displayUri = processedImageUri ?: imageUri
+                val displayedImage = rememberAsyncImagePainter(displayUri)
                 Image(
-                    painter = rememberAsyncImagePainter(imageUri),
+                    painter = displayedImage,
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onGloballyPositioned { layoutCoordinates ->
+                            imageWidth = layoutCoordinates.size.width
+                            imageHeight = layoutCoordinates.size.height
+                        },
                     contentScale = ContentScale.Fit
                 )
                 if (showBoundingBox) {
                     detectedObjects.forEach { obj ->
                         obj.boundingBox.let { box ->
+                            //calculate the factor to scale the bounding box to the image size
+                            val scaleX = imageWidth.toFloat() / box.width().toFloat()
+                            val scaleY = imageHeight.toFloat() / box.height().toFloat()
+
                             Box(
                                 modifier = Modifier
-                                    .absoluteOffset(x = box.left.dp, y = box.top.dp)
-                                    .size(box.width().dp, box.height().dp)
+                                    .absoluteOffset(x = (box.left / scaleX).dp, y = (box.top / scaleY).dp)
+                                    .size((box.width() / scaleX).dp, (box.height() / scaleY).dp)
                                     .border(2.dp, color = Color.Red)
                             )
                             // labels for testing but will most likely need to remove/change in the future when dealing with primarily legos
@@ -236,7 +283,7 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
                                     modifier = Modifier
                                         .padding(4.dp)
                                         .background(Color.Black.copy(alpha = 0.7f))
-                                        .absoluteOffset(x = box.left.dp, y = box.top.dp - 20.dp)
+                                        .absoluteOffset(x = (box.left / scaleX).dp, y = (box.top / scaleY).dp - 20.dp)
                                 )
                             }
                         }
