@@ -275,7 +275,7 @@ fun LandingPage(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
                             modifier = Modifier.fillMaxSize(),
-                            tint = Color.White
+                            tint = Color.White //Adjustable Icon color that is overwritten by colorscheme
                         )
                     }
                     Text(
