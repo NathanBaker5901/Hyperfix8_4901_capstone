@@ -56,8 +56,6 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
-    val detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList())} //stores list objects detected
-    val showBoundingBox by remember { mutableStateOf(false) } // Controls if the bounding box shows or doesn't
 
     // Trigger the gallery function automatically only if the shortcut is active
     LaunchedEffect(openGalleryShortcut) {
@@ -149,41 +147,10 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
         }
     }
 
-    // Show captured image without the ImagePopUp
     capturedImageUri?.let { uri ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = rememberAsyncImagePainter(uri),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize()
-            )
-            if (showBoundingBox) {
-                detectedObjects.forEach { obj ->
-                    obj.boundingBox.let { box ->
-                        Box(
-                            modifier = Modifier
-                                .absoluteOffset(x = box.left.dp, y = box.top.dp)
-                                .size(box.width().dp, box.height().dp)
-                                .border(2.dp, color = Color.Red)
-                        )
-                        obj.labels.forEach { label ->
-                            Text(
-                                text = label.text,
-                                fontSize = 12.sp,
-                                color = Color.White,
-                                modifier = Modifier
-                                    .padding(4.dp)
-                                    .background(Color.Black.copy(alpha = 0.7f))
-                                    .absoluteOffset(x = box.left.dp, y = box.top.dp - 20.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        ImagePopUp(uri) { capturedImageUri = null }
     }
 }
-
 
 @Composable
 fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
