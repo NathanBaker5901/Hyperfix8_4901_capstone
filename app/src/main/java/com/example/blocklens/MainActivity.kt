@@ -190,8 +190,8 @@ fun LandingPage(
 
     //Color Gradient
     val defaultGradientColors = listOf(
-        Color(0xFF0A3D66), // Dark blue
-        Color(0xFF87CEEB)  // Lighter blue
+        Color(0xFF002447), // Dark blue
+        Color(0xFF0052A3)  // Lighter blue
     )
     // sets the colorblind modes
     val colorScheme = getColorScheme(colorBlindMode)
@@ -201,7 +201,7 @@ fun LandingPage(
         ColorBlindMode.Protanopia -> listOf(Color(0xFF7F5F3F), Color(0xFFFFD700))  // Red-green colorblind
         ColorBlindMode.Deuteranopia -> listOf(Color(0xFF7F5F3F), Color(0xFFFFA500))  // Another red-green variant
         ColorBlindMode.Tritanopia -> listOf(Color(0xFF003366), Color(0xFFFF66CC))  // Blue-yellow colorblind
-        else -> listOf(Color(0xFF0A3D66), Color(0xFF87CEEB))  // Default gradient (blue to light blue)
+        else -> listOf(Color(0xFF002447), Color(0xFF0052A3))  // Default gradient (blue to light blue)
     }
 
     // Use colorScheme.backgroundColor for color-blind mode, else use the default gradient
