@@ -292,7 +292,23 @@ fun LandingPage(
                         color = Color.White
                     )
                 }
+
             }
+
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Text(
+                text = "© 2024 HyperFix8 | Bricked Up",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    color = Color(0xFF000000)
+                )
+            )
         }
     }
 }
