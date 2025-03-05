@@ -20,20 +20,30 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
+import com.example.blocklens.ui.theme.getColorScheme
+import com.example.blocklens.ui.theme.getGradientBrush
 
 
 const val TAG = "BlockLens TEST"
+
+enum class TextSizeOption {
+    Small, Default, Large
+}
 
 class MainActivity : ComponentActivity() {
 
@@ -121,6 +131,8 @@ fun BlockLensApp() {
     ) {
         when (currentPage) {
             "landing" -> LandingPage(
+                textSizeOption = textSizeOption,
+                colorBlindMode = colorBlindMode,
                 onNavigateToSettings = { currentPage = "settings" },
                 onNavigateToCamera = { currentPage = "camera" },
                 onNavigateToGallery = {
@@ -170,63 +182,135 @@ fun BlockLensApp() {
 
 @Composable
 fun LandingPage(
+    textSizeOption: TextSizeOption,
+    colorBlindMode: ColorBlindMode,
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit
-)  {
-    Column(
+) {
+
+    // sets the colorblind modes
+    val colorScheme = getColorScheme(colorBlindMode)
+
+    //setting text sizes
+    val fontSize = when (textSizeOption) {
+        TextSizeOption.Small -> 32.sp  // Small text size
+        TextSizeOption.Default -> 48.sp // Default text size
+        TextSizeOption.Large -> 64.sp  // Large text size
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .background(getGradientBrush(colorBlindMode)) // Apply the gradient
     ) {
-        Text(
-            "Block Lens",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(108.dp))
 
-        IconButton(onClick = onNavigateToCamera) {
-            Icon(
-                imageVector = Icons.Default.Camera,
-                contentDescription = "Camera",
-                modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
-                tint = Color.White
-
-            )
-        }
-
-        Spacer(modifier = Modifier.height(72.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center, // Center everything
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            Text(
+                "Block Lens",
+                fontSize = textSizeOption.title,
+                style = MaterialTheme.typography.headlineLarge,
+                //style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
+                //color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(48.dp)) // Space below the title
 
-            IconButton(onClick = onNavigateToGallery) {
-                Icon(
-                    imageVector = Icons.Default.Photo,
-                    contentDescription = "Gallery",
-                    modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
-                    tint = Color.White
 
+            // Gallery Icon (Top Center)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = onNavigateToGallery,
+                    modifier = Modifier.size(96.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Photo,
+                        contentDescription = "Gallery",
+                        modifier = Modifier.fillMaxSize(),
+                        tint = Color.White
+                    )
+                }
+                Text(
+                    "Gallery",
+                    fontSize = textSizeOption.subtext,
+                    //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    color = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(64.dp)) // Adjust spacing between Gallery & bottom icons
 
-            IconButton(onClick = onNavigateToSettings) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    modifier = Modifier.size(48.dp).shadow(8.dp, shape = RoundedCornerShape(12.dp)),
-                    tint = Color.White
+            // Bottom row containing Camera and Settings icons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f), // Keep them closer to the center
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                // Settings Icon (Bottom Left)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White //Adjustable Icon color that is overwritten by colorscheme
+                        )
+                    }
+                    Text(
+                        "Settings",
+                        fontSize = textSizeOption.subtext,
+                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        color = Color.White
+                    )
+                }
 
-                )
+                // Camera Icon (Bottom Right)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = onNavigateToCamera,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Camera,
+                            contentDescription = "Camera",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        "Camera",
+                        fontSize = textSizeOption.subtext,
+                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        color = Color.White
+                    )
+                }
+
             }
+
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 16.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            Text(
+                text = "© 2024 HyperFix8 | Bricked Up",
+                style = TextStyle(
+                    fontSize = 14.sp,
+                    color = Color(0xFF000000)
+                )
+            )
         }
     }
 }
