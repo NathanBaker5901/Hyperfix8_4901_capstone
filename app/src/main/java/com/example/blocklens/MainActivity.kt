@@ -216,8 +216,10 @@ fun LandingPage(
             Text(
                 "Block Lens",
                 fontSize = textSizeOption.title,
+                style = MaterialTheme.typography.headlineLarge,
                 //style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
-                color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
+                //color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(48.dp)) // Space below the title
 
