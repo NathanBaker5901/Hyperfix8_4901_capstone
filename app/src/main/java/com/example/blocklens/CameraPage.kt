@@ -1,6 +1,7 @@
 package com.example.blocklens
 
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -36,6 +37,8 @@ import coil.compose.rememberAsyncImagePainter
 import java.io.File
 import java.io.InputStream
 import androidx.compose.foundation.border
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 
@@ -147,155 +150,136 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
         }
     }
 
-    capturedImageUri?.let { uri ->
-        ImagePopUp(uri) { capturedImageUri = null }
+    if (capturedImageUri != null) {
+        ImagePopUp(
+            imageUri = capturedImageUri!!,
+            onClose = { capturedImageUri = null },
+        )
+    }
+}
+
+//function to detect object and handle results
+fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (List<DetectedObject>, Uri?, Int, Int) -> Unit) {
+    context.contentResolver.openInputStream(imageUri)?.use { imageStream ->
+        val bitmap = BitmapFactory.decodeStream(imageStream)
+
+        bitmap?.let {
+            val tempFile = File(context.cacheDir, "temp_analyzed_image.jpg")
+            tempFile.outputStream().use { out ->
+                it.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            }
+
+            val processedUri = Uri.fromFile(tempFile)
+
+            val image = InputImage.fromBitmap(it, 0)
+            val options = ObjectDetectorOptions.Builder()
+                .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
+                .enableMultipleObjects()
+                .enableClassification()
+                .build()
+
+            val objectDetector = ObjectDetection.getClient(options)
+
+            objectDetector.process(image)
+                .addOnSuccessListener { objects ->
+                    onDetectionComplete(objects, processedUri, it.width, it.height)
+                }
+                .addOnFailureListener { e ->
+                    Log.e("MLKit", "Object detection failed", e)
+                    onDetectionComplete(emptyList(), processedUri, it.width, it.height)
+                }
+        }
+    }
+}
+
+//function to display the boxes and labels
+@Composable
+fun BoundingBoxOverlay(detectedObjects: List<DetectedObject>, imageWidth: Int, imageHeight: Int, originalImageWidth: Int, originalImageHeight: Int) {
+    if (detectedObjects.isNotEmpty()) {
+        detectedObjects.forEach { obj ->
+            obj.boundingBox.let { box ->
+                val scaleX = imageWidth.toFloat() / originalImageWidth.toFloat()
+                val scaleY = imageHeight.toFloat() / originalImageHeight.toFloat()
+
+                val scaledLeft = box.left * scaleX
+                val scaledTop = box.top * scaleY
+                val scaledWidth = box.width() * scaleX
+                val scaledHeight = box.height() * scaleY
+
+                Box(
+                    modifier = Modifier
+                        .absoluteOffset(x = scaledLeft.dp, y = scaledTop.dp)
+                        .size(scaledWidth.dp, scaledHeight.dp)
+                        .border(2.dp, color = Color.Red)
+                )
+                obj.labels.forEach { label ->
+                    Text(
+                        text = label.text,
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .background(Color.Black.copy(alpha = 0.7f))
+                            .absoluteOffset(x = scaledLeft.dp, y = (scaledTop - 20).dp)
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
 fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
-    val context = LocalContext.current //get android context(needed to get files)
-    var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList())} //stores list objects detected
-    var showBoundingBox by remember { mutableStateOf(false) } // Controls if the bounding box shows or doesn't
-    var processedImageUri by remember { mutableStateOf<Uri?>(null) } // Stores the URI of the full size image
-    var imageWidth by remember { mutableIntStateOf(1) } //keep track of width for correct scaling
-    var imageHeight by remember { mutableIntStateOf(1) } //keep track of height for correct scaling
+    val context = LocalContext.current
+    var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList()) }
+    var imageWidth by remember { mutableIntStateOf(1) }
+    var imageHeight by remember { mutableIntStateOf(1) }
 
-
-    //need to rotate the bitmap to the correct orientation
-    fun rotateBitmap(bitmap: Bitmap, angle: Float): Bitmap {
-        val matrix = Matrix()
-        matrix.postRotate(angle) // Rotate by the specified angle
-        return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-    }
-
-    // will need to change if we want to use live image so a new instance is not created every frame
-    // its okay for now since we are using a static image at the moment.
-    val detectObjects: () -> Unit = {
-        val imageStream: InputStream? = context.contentResolver.openInputStream(imageUri) // open image file
-        val bitmap = BitmapFactory.decodeStream(imageStream) // convert image to bitmap
-
-        //**FUTURE IMPLEMENTATION** if we want to implement horizontal screen make sure to make a conditional
-        // statement in order to stop the rotation if the screen orientation is horizontal
-        val rotatedBitmap = rotateBitmap(bitmap, 90f) // rotate image 90 degrees due to the bitmap rotating on vertical
-
-
-        //save a temp for the full size image so the bounding boxes accurately size around the object
-        val tempFile = File(context.cacheDir, "temp_analyzed_image.jpg")
-        tempFile.outputStream().use { out ->
-            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+    // Trigger object detection when the image is loaded
+    LaunchedEffect(imageUri) {
+        detectObjects(context, imageUri) { objects, _, width, height ->
+            detectedObjects = objects
+            imageWidth = width
+            imageHeight = height
         }
-        processedImageUri = Uri.fromFile(tempFile) //update uri to processed image
-
-        imageWidth = rotatedBitmap.width //update image width
-        imageHeight = rotatedBitmap.height //update image height
-
-        val image = InputImage.fromBitmap(rotatedBitmap, 0)
-        // configure mlkit object detector
-        val options = ObjectDetectorOptions.Builder() // create ObjectDetectorOptions object
-            .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE) // set the mode for a single image
-            .enableMultipleObjects() // CAN TURN ON AND OFF TO TEST IF MULTIPLE OBJECTS IS NOT WORKING
-            .enableClassification() // OBJECT RECOGNITION NAMES CAN BE USED FOR TESTING FOR NOW BUT WILL NEED TO REMOVE/CHANGE IN THE FUTURE
-            .build() // build the options
-        
-        val objectDetector = ObjectDetection.getClient(options) // create objectDetector instance using the previous options
-
-        //Clear previous detected objects to avoid bad results
-        detectedObjects = emptyList()
-        showBoundingBox = false
-
-        // if successful updates detectedObjects and showBoundingBox
-        objectDetector.process(image)
-            .addOnSuccessListener { objects ->
-                detectedObjects = objects
-                showBoundingBox = objects.isNotEmpty()
-            }
-            // else if it fails log error for MLKit
-            .addOnFailureListener { e ->
-                Log.e("MLKit", "Object detection failed", e)
-            }
-        
     }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
-        contentAlignment = Alignment.Center
+            .background(Color.Black)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth(0.9f)
-                .fillMaxHeight(0.8f)
-                .background(MaterialTheme.colorScheme.surface),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.End
-            ) {
-                Text(
-                    "X",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.clickable { onClose() }
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(8.dp)
-            ) {
-               // Show the processed image if availiable otherwise keep original
-                val displayUri = processedImageUri ?: imageUri
-                val displayedImage = rememberAsyncImagePainter(displayUri)
-                Image(
-                    painter = displayedImage,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .onGloballyPositioned { layoutCoordinates ->
-                            imageWidth = layoutCoordinates.size.width
-                            imageHeight = layoutCoordinates.size.height
-                        },
-                    contentScale = ContentScale.Fit
-                )
-                if (showBoundingBox) {
-                    detectedObjects.forEach { obj ->
-                        obj.boundingBox.let { box ->
-                            //calculate the factor to scale the bounding box to the image size
-                            val scaleX = imageWidth.toFloat() / box.width().toFloat()
-                            val scaleY = imageHeight.toFloat() / box.height().toFloat()
+        // Use ContentScale.Fit or ContentScale.Crop for better control of image aspect ratio
+        Image(
+            painter = rememberAsyncImagePainter(imageUri),
+            contentDescription = "Captured Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit // Maintains aspect ratio without distorting
+        )
 
-                            Box(
-                                modifier = Modifier
-                                    .absoluteOffset(x = (box.left / scaleX).dp, y = (box.top / scaleY).dp)
-                                    .size((box.width() / scaleX).dp, (box.height() / scaleY).dp)
-                                    .border(2.dp, color = Color.Red)
-                            )
-                            // labels for testing but will most likely need to remove/change in the future when dealing with primarily legos
-                            obj.labels.forEach { label ->
-                                Text(
-                                    text = label.text,
-                                    fontSize = 12.sp,
-                                    color = Color.White,
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                        .background(Color.Black.copy(alpha = 0.7f))
-                                        .absoluteOffset(x = (box.left / scaleX).dp, y = (box.top / scaleY).dp - 20.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            Button(
-                onClick = detectObjects,
+        // Show bounding boxes
+        BoundingBoxOverlay(
+            detectedObjects = detectedObjects,
+            imageWidth = imageWidth,
+            imageHeight = imageHeight,
+            originalImageWidth = imageWidth,
+            originalImageHeight = imageHeight,
+        )
+
+        // Close button
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .background(Color.Red, shape = CircleShape)
+                .clickable { onClose() },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "X",
+                color = Color.White,
                 modifier = Modifier.padding(8.dp)
-            ) {
-                Text("Analyze")
-            }
+            )
         }
     }
 }
