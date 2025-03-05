@@ -31,11 +31,11 @@ fun getColorScheme(mode: ColorBlindMode): ColorScheme {
             borderColor = Color(0xFF000000)       // Black border color
         )
         ColorBlindMode.Protanopia -> ColorScheme(
-            mainColor = Color(0xFF2451A0),
-            selectedBoxColor = Color(0xFF2451A0),
-            accentColor = Color(0xFF2151A0),
-            backgroundColor = Color(0xFF182747),
-            highlightBoxColor = Color(0xFF8F7E1E),
+            mainColor = Color(0xFF24509F),
+            selectedBoxColor = Color(0xFF21509F),
+            accentColor = Color(0xFF182746),
+            backgroundColor = Color(0xFF213F7B),
+            highlightBoxColor = Color(0xFF8E7D1E),
             textColor = Color(0xFFFFFFFF),
             borderColor = Color(0xFF000000)
         )

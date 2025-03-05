@@ -36,6 +36,7 @@ import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.getColorScheme
+import com.example.blocklens.ui.theme.getGradientBrush
 
 
 const val TAG = "BlockLens TEST"
@@ -188,27 +189,10 @@ fun LandingPage(
     onNavigateToGallery: () -> Unit
 ) {
 
-    //Color Gradient
-    val defaultGradientColors = listOf(
-        Color(0xFF002447), // Dark blue
-        Color(0xFF0052A3)  // Lighter blue
-    )
     // sets the colorblind modes
     val colorScheme = getColorScheme(colorBlindMode)
 
-    // Define a different gradient for color-blind modes if necessary (for example)
-    val colorBlindGradient = when (colorBlindMode) {
-        ColorBlindMode.Protanopia -> listOf(Color(0xFF7F5F3F), Color(0xFFFFD700))  // Red-green colorblind
-        ColorBlindMode.Deuteranopia -> listOf(Color(0xFF7F5F3F), Color(0xFFFFA500))  // Another red-green variant
-        ColorBlindMode.Tritanopia -> listOf(Color(0xFF003366), Color(0xFFFF66CC))  // Blue-yellow colorblind
-        else -> listOf(Color(0xFF002447), Color(0xFF0052A3))  // Default gradient (blue to light blue)
-    }
-
-    // Use colorScheme.backgroundColor for color-blind mode, else use the default gradient
-    val backgroundBrush = Brush.verticalGradient(
-        colors = if (colorBlindMode != ColorBlindMode.Default) colorBlindGradient else defaultGradientColors
-    )
-
+    //setting text sizes
     val fontSize = when (textSizeOption) {
         TextSizeOption.Small -> 32.sp  // Small text size
         TextSizeOption.Default -> 48.sp // Default text size
@@ -218,7 +202,7 @@ fun LandingPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundBrush) // Apply the gradient
+            .background(getGradientBrush(colorBlindMode)) // Apply the gradient
     ) {
 
         Column(
@@ -231,7 +215,8 @@ fun LandingPage(
 
             Text(
                 "Block Lens",
-                style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
+                fontSize = textSizeOption.title,
+                //style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
                 color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
             )
             Spacer(modifier = Modifier.height(48.dp)) // Space below the title
@@ -252,7 +237,8 @@ fun LandingPage(
                 }
                 Text(
                     "Gallery",
-                    style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    fontSize = textSizeOption.subtext,
+                    //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                     color = Color.White
                 )
             }
@@ -280,7 +266,8 @@ fun LandingPage(
                     }
                     Text(
                         "Settings",
-                        style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        fontSize = textSizeOption.subtext,
+                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                         color = Color.White
                     )
                 }
@@ -300,7 +287,8 @@ fun LandingPage(
                     }
                     Text(
                         "Camera",
-                        style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        fontSize = textSizeOption.subtext,
+                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                         color = Color.White
                     )
                 }

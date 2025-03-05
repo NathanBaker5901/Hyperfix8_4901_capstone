@@ -96,6 +96,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                 Text(
                     "Back",
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.clickable { onBack() }
                 )
                 Box(
@@ -136,6 +137,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                 Text(
                     "Gallery",
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.clickable { onOpenGallery() }
                 )
             }
@@ -203,6 +205,7 @@ fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
                 Text(
                     "X",
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.clickable { onClose() }
                 )
             }
@@ -262,7 +265,9 @@ fun GalleryPage(onBack: () -> Unit, selectedImageUri: Uri?) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Gallery Page", style = MaterialTheme.typography.headlineLarge)
+        Text("Gallery Page",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground)
         Spacer(modifier = Modifier.height(16.dp))
         selectedImageUri?.let{
             Image(
