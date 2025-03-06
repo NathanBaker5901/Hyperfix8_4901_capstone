@@ -2,6 +2,7 @@ package com.example.blocklens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -97,12 +98,16 @@ fun BlockLensApp() {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     var openGalleryShortcut by remember { mutableStateOf(false) }
+    var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }  // Add this line
+    var hasDetectedObjects by remember { mutableStateOf(false) }  // Add this flag
     val context = LocalContext.current
 
     // Image picker
     val pickImageLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             selectedImageUri = uri
+            capturedImageUri = null  // Reset captured image URI when a new image is selected
+            hasDetectedObjects = false  // Reset detection flag when a new image is selected
         }
 
     // Permission check
@@ -156,24 +161,38 @@ fun BlockLensApp() {
                 onOpenGallery = {
                     checkGalleryPermission()
                 },
-                openGalleryShortcut = openGalleryShortcut
+                openGalleryShortcut = openGalleryShortcut,
+                selectedImageUri = selectedImageUri // Pass the actual selectedImageUri here
+
             )
 
             "gallery" -> GalleryPage(
                 onBack = {
                     currentPage = "landing"
                     selectedImageUri = null // Reset the URI
-            },
-            selectedImageUri = selectedImageUri
+                },
+                selectedImageUri = selectedImageUri
             )
         }
 
         // Show the pop-up for either captured or selected images
         val imageUriForPopUp = capturedImageUri ?: selectedImageUri
+
         imageUriForPopUp?.let { uri ->
-            ImagePopUp(uri) {
+            // Pass 'annotatedBitmap' to ImagePopUp
+            if (!hasDetectedObjects) {
+                detectObjects(context, uri) { annotatedBitmapResult ->
+                    annotatedBitmap = annotatedBitmapResult  // Update annotatedBitmap
+                    hasDetectedObjects = true  // Set the flag to true after detection
+                }
+            }
+
+
+        // If the image URI is set, detect objects and get the annotated bitmap
+            ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap) {
                 capturedImageUri = null
                 selectedImageUri = null
+                hasDetectedObjects = false  // Reset flag when pop-up closes
             }
         }
     }

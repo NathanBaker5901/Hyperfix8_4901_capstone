@@ -1,9 +1,19 @@
 package com.example.blocklens
 
 
+import android.R.attr.orientation
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ImageDecoder
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+
+
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.Typeface
 import android.net.Uri
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
@@ -39,8 +49,9 @@ import java.io.InputStream
 import androidx.compose.foundation.border
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.core.graphics.scaleMatrix
 
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
@@ -51,14 +62,18 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.objects.DetectedObject
+import kotlinx.coroutines.selects.select
+import java.io.IOException
 
 @Composable
-fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean) {
+fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean, selectedImageUri: Uri?) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isObjectDetectionDone by remember { mutableStateOf(false) }
 
     // Trigger the gallery function automatically only if the shortcut is active
     LaunchedEffect(openGalleryShortcut) {
@@ -115,7 +130,8 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                                 context.cacheDir,
                                 "captured_image_${System.currentTimeMillis()}.jpg"
                             )
-                            val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                            val outputOptions =
+                                ImageCapture.OutputFileOptions.Builder(photoFile).build()
 
                             imageCapture.takePicture(
                                 outputOptions,
@@ -126,7 +142,11 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                                     }
 
                                     override fun onError(exception: ImageCaptureException) {
-                                        Toast.makeText(context, "Failed to capture image", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(
+                                            context,
+                                            "Failed to capture image",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
                                         Log.e("CameraPage", "Image capture failed", exception)
                                     }
                                 }
@@ -150,28 +170,81 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
         }
     }
 
-    if (capturedImageUri != null) {
-        ImagePopUp(
-            imageUri = capturedImageUri!!,
-            onClose = { capturedImageUri = null },
-        )
+    val imageUriForPopUp = capturedImageUri ?: selectedImageUri
+    imageUriForPopUp?.let { uri ->
+        logExifData(context, uri)
+        val bitmap = uriToBitmap(context, uri)
+        if(bitmap != null && !isObjectDetectionDone) {
+            detectObjects(context, uri) { annotatedBitmapResult ->
+                annotatedBitmap = annotatedBitmapResult
+                isObjectDetectionDone = true
+            }
+        }
+
+
+
+        // Show imagePopup with annotated bitmap
+        ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap, onClose = {
+            capturedImageUri = null
+            annotatedBitmap = null
+            isObjectDetectionDone = false
+        })
     }
 }
 
+//convert Uri to Bitmap check API version to use different libraries
+fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
+    return try {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            // Use ImageDecoder for API 28+
+            val source = ImageDecoder.createSource(context.contentResolver, uri)
+            ImageDecoder.decodeBitmap(source)
+        } else {
+            // Use BitmapFactory for older versions
+            val inputStream = context.contentResolver.openInputStream(uri)
+            BitmapFactory.decodeStream(inputStream)
+        }
+
+    } catch (e: IOException) {
+        e.printStackTrace()
+        null
+    }
+    Log.d("EXIFOrientation", "Image orientation in uriToBitmap: $orientation")
+
+}
+
+//will create a special bitmap that is pre rotated 90 degrees
+//**can add more rotation options in the future if screen rotation is made available for our app**
+fun correctBitmapOrientation(bitmap: Bitmap, uri: Uri, context: Context): Bitmap {
+    // Read the EXIF data to check the orientation
+    val exif = ExifInterface(context.contentResolver.openInputStream(uri)!!)
+    val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+
+    // Initialize a matrix to apply transformations
+    val matrix = Matrix()
+
+    // Apply the necessary rotation or flip based on EXIF orientation
+    when (orientation) {
+        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
+        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
+        ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
+        // No action for normal orientation
+    }
+
+    // Create a new bitmap with the applied transformation
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+}
+
 //function to detect object and handle results
-fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (List<DetectedObject>, Uri?, Int, Int) -> Unit) {
+fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap) -> Unit) {
     context.contentResolver.openInputStream(imageUri)?.use { imageStream ->
         val bitmap = BitmapFactory.decodeStream(imageStream)
+        Log.d("EXIFOrientation", "Image orientation start detect objects: $orientation")
 
         bitmap?.let {
-            val tempFile = File(context.cacheDir, "temp_analyzed_image.jpg")
-            tempFile.outputStream().use { out ->
-                it.compress(Bitmap.CompressFormat.JPEG, 100, out)
-            }
-
-            val processedUri = Uri.fromFile(tempFile)
-
-            val image = InputImage.fromBitmap(it, 0)
+            val image = InputImage.fromBitmap(bitmap, 0)
             val options = ObjectDetectorOptions.Builder()
                 .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
                 .enableMultipleObjects()
@@ -182,105 +255,99 @@ fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (List<De
 
             objectDetector.process(image)
                 .addOnSuccessListener { objects ->
-                    onDetectionComplete(objects, processedUri, it.width, it.height)
+                    Log.d("ObjectDetection", "Detected objects: ${objects.size}")
+                    if (objects.isEmpty()) {
+                        Log.d("ObjectDetection", "No objects detected")
+                    }
+                    val annotatedBitmap = drawBoundingBoxesOnBitmap(it, objects)
+                    onDetectionComplete(annotatedBitmap)
                 }
                 .addOnFailureListener { e ->
                     Log.e("MLKit", "Object detection failed", e)
-                    onDetectionComplete(emptyList(), processedUri, it.width, it.height)
+                    onDetectionComplete(it) // Return original image if detection fails
                 }
+
         }
     }
+    Log.d("EXIFOrientation", "Image orientation end detect objects: $orientation")
 }
 
 //function to display the boxes and labels
+fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObject>): Bitmap {
+    val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+    val canvas = Canvas(mutableBitmap)
+    val paint = Paint().apply {
+        color = android.graphics.Color.RED
+        style = Paint.Style.STROKE
+        strokeWidth = 2.0f
+    }
+    val textPaint = Paint().apply {
+        color = android.graphics.Color.WHITE
+        textSize = 40f
+        typeface = Typeface.DEFAULT_BOLD
+    }
+    for (obj in detectedObjects) {
+        val box = obj.boundingBox
+        Log.d("BoundingBox", "Drawing bounding box: $box")
+        canvas.drawRect(box, paint)
+
+        obj.labels.forEach { label ->
+            Log.d("BoundingBox", "Drawing label: ${label.text}")
+            canvas.drawText(label.text, box.left.toFloat(), box.top.toFloat() - 10, textPaint)
+        }
+    }
+
+    return mutableBitmap
+}
+
 @Composable
-fun BoundingBoxOverlay(detectedObjects: List<DetectedObject>, imageWidth: Int, imageHeight: Int, originalImageWidth: Int, originalImageHeight: Int) {
-    if (detectedObjects.isNotEmpty()) {
-        detectedObjects.forEach { obj ->
-            obj.boundingBox.let { box ->
-                val scaleX = imageWidth.toFloat() / originalImageWidth.toFloat()
-                val scaleY = imageHeight.toFloat() / originalImageHeight.toFloat()
+fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
+    val context = LocalContext.current
+    val bitmap = remember(uri) { uriToBitmap(context, uri) }
+    val imageToDisplay = annotatedBitmap ?: bitmap
 
-                val scaledLeft = box.left * scaleX
-                val scaledTop = box.top * scaleY
-                val scaledWidth = box.width() * scaleX
-                val scaledHeight = box.height() * scaleY
+    imageToDisplay?.let {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "Captured Image with Bounding Boxes",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
 
-                Box(
-                    modifier = Modifier
-                        .absoluteOffset(x = scaledLeft.dp, y = scaledTop.dp)
-                        .size(scaledWidth.dp, scaledHeight.dp)
-                        .border(2.dp, color = Color.Red)
+            // Close button
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .background(Color.Red, shape = CircleShape)
+                    .clickable { onClose() },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "X",
+                    color = Color.White,
+                    modifier = Modifier.padding(8.dp)
                 )
-                obj.labels.forEach { label ->
-                    Text(
-                        text = label.text,
-                        fontSize = 12.sp,
-                        color = Color.White,
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .background(Color.Black.copy(alpha = 0.7f))
-                            .absoluteOffset(x = scaledLeft.dp, y = (scaledTop - 20).dp)
-                    )
-                }
             }
         }
     }
 }
 
-@Composable
-fun ImagePopUp(imageUri: Uri, onClose: () -> Unit) {
-    val context = LocalContext.current
-    var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList()) }
-    var imageWidth by remember { mutableIntStateOf(1) }
-    var imageHeight by remember { mutableIntStateOf(1) }
-
-    // Trigger object detection when the image is loaded
-    LaunchedEffect(imageUri) {
-        detectObjects(context, imageUri) { objects, _, width, height ->
-            detectedObjects = objects
-            imageWidth = width
-            imageHeight = height
+fun logExifData(context: Context, uri: Uri) {
+    try {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        inputStream?.use {
+            val exif = ExifInterface(it)
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            Log.d("EXIFOrientation", "Actual EXIF orientation: $orientation")
         }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        // Use ContentScale.Fit or ContentScale.Crop for better control of image aspect ratio
-        Image(
-            painter = rememberAsyncImagePainter(imageUri),
-            contentDescription = "Captured Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit // Maintains aspect ratio without distorting
-        )
-
-        // Show bounding boxes
-        BoundingBoxOverlay(
-            detectedObjects = detectedObjects,
-            imageWidth = imageWidth,
-            imageHeight = imageHeight,
-            originalImageWidth = imageWidth,
-            originalImageHeight = imageHeight,
-        )
-
-        // Close button
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .background(Color.Red, shape = CircleShape)
-                .clickable { onClose() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "X",
-                color = Color.White,
-                modifier = Modifier.padding(8.dp)
-            )
-        }
+    } catch (e: Exception) {
+        Log.e("EXIFOrientation", "Failed to read EXIF data", e)
     }
 }
 
