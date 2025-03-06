@@ -37,6 +37,7 @@ import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.getColorScheme
+import com.example.blocklens.ui.theme.getGradientBrush
 
 
 const val TAG = "BlockLens TEST"
@@ -205,9 +206,12 @@ fun LandingPage(
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
     onNavigateToGallery: () -> Unit
-){
+) {
+
+    // sets the colorblind modes
     val colorScheme = getColorScheme(colorBlindMode)
 
+    //setting text sizes
     val fontSize = when (textSizeOption) {
         TextSizeOption.Small -> 32.sp  // Small text size
         TextSizeOption.Default -> 48.sp // Default text size
@@ -217,81 +221,102 @@ fun LandingPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            //.background(Color.White) // Set background color to white
-                .background(
-                Brush.verticalGradient(
-                    colors = listOf(colorScheme.backgroundColor, Color.LightGray)
-                )
-            )
+            .background(getGradientBrush(colorBlindMode)) // Apply the gradient
     ) {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            "Block Lens",
-            style = TextStyle(fontSize = fontSize, fontWeight = FontWeight.Bold),
-            color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
-            )
-        Spacer(modifier = Modifier.height(108.dp))
-
-        IconButton(
-            onClick = onNavigateToCamera,
-            modifier = Modifier.size(96.dp)
-            ) {
-            Icon(
-                imageVector = Icons.Default.Camera,
-                contentDescription = "Camera",
-                modifier = Modifier.fillMaxSize(),
-                tint = colorScheme?.mainColor ?: Color.Red //Set icon to red
-
-            )
-        }
-
-        Spacer(modifier = Modifier.height(72.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center, // Center everything
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
+            Text(
+                "Block Lens",
+                fontSize = textSizeOption.title,
+                style = MaterialTheme.typography.headlineLarge,
+                //style = TextStyle(fontSize = 48.sp, fontWeight = FontWeight.Bold),
+                //color = colorScheme?.textColor ?: Color(0xFFFFA500) // Orange color
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(48.dp)) // Space below the title
 
-            IconButton(
-                onClick = onNavigateToGallery,
-                modifier = Modifier.size(96.dp)
+
+            // Gallery Icon (Top Center)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(
+                    onClick = onNavigateToGallery,
+                    modifier = Modifier.size(96.dp)
                 ) {
-                Icon(
-                    imageVector = Icons.Default.Photo,
-                    contentDescription = "Gallery",
-                    modifier = Modifier.fillMaxSize(),
-                    tint = colorScheme?.accentColor ?:  Color.White //set icon to yellow
-
+                    Icon(
+                        imageVector = Icons.Default.Photo,
+                        contentDescription = "Gallery",
+                        modifier = Modifier.fillMaxSize(),
+                        tint = Color.White
+                    )
+                }
+                Text(
+                    "Gallery",
+                    fontSize = textSizeOption.subtext,
+                    //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                    color = Color.White
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(64.dp)) // Adjust spacing between Gallery & bottom icons
 
-            IconButton(
-                onClick = onNavigateToSettings,
-                modifier = Modifier.size(96.dp)
+            // Bottom row containing Camera and Settings icons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(0.7f), // Keep them closer to the center
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    modifier = Modifier.fillMaxSize(),
-                    tint = colorScheme?.highlightBoxColor ?: Color.Blue //set icon to blue
+                // Settings Icon (Bottom Left)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = onNavigateToSettings,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White //Adjustable Icon color that is overwritten by colorscheme
+                        )
+                    }
+                    Text(
+                        "Settings",
+                        fontSize = textSizeOption.subtext,
+                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        color = Color.White
+                    )
+                }
 
+                // Camera Icon (Bottom Right)
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    IconButton(
+                        onClick = onNavigateToCamera,
+                        modifier = Modifier.size(96.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Camera,
+                            contentDescription = "Camera",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        "Camera",
+                        fontSize = textSizeOption.subtext,
+                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
+                        color = Color.White
+                    )
+                }
 
-
-                )
             }
-        }
-    }
 
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -299,13 +324,12 @@ fun LandingPage(
             contentAlignment = Alignment.BottomCenter
         ) {
             Text(
-                text = "© 2024 HyperFix8-Bricked Up",
+                text = "© 2024 HyperFix8 | Bricked Up",
                 style = TextStyle(
                     fontSize = 14.sp,
-                    color = Color(0xFF333333)
+                    color = Color(0xFF000000)
                 )
             )
         }
     }
 }
-
