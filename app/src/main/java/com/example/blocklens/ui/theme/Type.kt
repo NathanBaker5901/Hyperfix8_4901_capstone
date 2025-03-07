@@ -11,12 +11,15 @@ import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.getColorScheme
 import com.example.blocklens.ui.theme.TextSizeOption
 
-// CLass for custom font
+// CLass for custom font for TEXT
 val IBMplexsans = FontFamily(
     Font(R.font.ibmplexsans, FontWeight.Normal)
 )
 
-
+// CLass for custom font for Titles
+val BebasNeueFont = FontFamily(
+    Font(R.font.bebasneue_font, FontWeight.Normal)
+)
 
 // Set of Material typography styles to start with
 val Typography = Typography(
