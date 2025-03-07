@@ -12,8 +12,8 @@ import com.example.blocklens.ui.theme.getColorScheme
 import com.example.blocklens.ui.theme.TextSizeOption
 
 // CLass for custom font
-val BebasNeueFont = FontFamily(
-    Font(R.font.bebasneue_font, FontWeight.Normal)
+val IBMplexsans = FontFamily(
+    Font(R.font.ibmplexsans, FontWeight.Normal)
 )
 
 
@@ -22,7 +22,7 @@ val BebasNeueFont = FontFamily(
 val Typography = Typography(
     // Large text style for headings or labels
     headlineLarge = TextStyle(
-        fontFamily = BebasNeueFont, // Replace with custom font if needed
+        fontFamily = IBMplexsans, // Replace with custom font if needed
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
         lineHeight = 28.sp,
@@ -30,7 +30,7 @@ val Typography = Typography(
     ),
     // Medium text style for smaller headings
     headlineMedium = TextStyle(
-        fontFamily = BebasNeueFont, // Replace with custom font if needed
+        fontFamily = IBMplexsans, // Replace with custom font if needed
         fontWeight = FontWeight.Medium,
         fontSize = 20.sp,
         lineHeight = 24.sp,
@@ -38,7 +38,7 @@ val Typography = Typography(
     ),
     // Regular text style for body text
     bodyLarge = TextStyle(
-        fontFamily = BebasNeueFont, // Replace with custom font if needed
+        fontFamily = IBMplexsans, // Replace with custom font if needed
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 22.sp,
@@ -46,7 +46,7 @@ val Typography = Typography(
     ),
     // Small text style for secondary text or captions
     bodySmall = TextStyle(
-        fontFamily = BebasNeueFont, // Replace with custom font if needed
+        fontFamily = IBMplexsans, // Replace with custom font if needed
         fontWeight = FontWeight.Light,
         fontSize = 12.sp,
         lineHeight = 16.sp,
