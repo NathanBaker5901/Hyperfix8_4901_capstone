@@ -25,7 +25,7 @@ val BebasNeueFont = FontFamily(
 val Typography = Typography(
     // Large text style for headings or labels
     headlineLarge = TextStyle(
-        fontFamily = IBMplexsans, // Replace with custom font if needed
+        fontFamily = BebasNeueFont, // Replace with custom font if needed
         fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
         lineHeight = 28.sp,
@@ -33,7 +33,7 @@ val Typography = Typography(
     ),
     // Medium text style for smaller headings
     headlineMedium = TextStyle(
-        fontFamily = IBMplexsans, // Replace with custom font if needed
+        fontFamily = BebasNeueFont, // Replace with custom font if needed
         fontWeight = FontWeight.Medium,
         fontSize = 20.sp,
         lineHeight = 24.sp,
