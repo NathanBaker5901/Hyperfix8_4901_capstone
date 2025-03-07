@@ -1,0 +1,164 @@
+ID,Main_Part_ID,Secondary_Part_ID,Sheet_Element_ID,Color,Rebrickable_Name,"Official_Name, Category"
+E1,2654.0,,4278359.0,Black,Plate Round 2 x 2 with Rounded Bottom [Boat Stud],Slide Shoe Round 2X2,"Plates, Round & Angles"
+E2,2736.0,,4211375.0,Medium Stone Grey,Technic Axle Towball,Ball W. Cross Axle,Connectors
+C1,2780.0,,4121715.0,Black,Technic Pin with Friction Ridges Lengthwise and Center Slots,Connector Peg W. Friction,Connectors
+C2,2815.0,,6028041.0,Black,Technic Wedge Belt Wheel Tire,Tyre for Wedge-Belt Wheel,Modified Tyres & Rims
+C3,3648.0,24505.0,4514558.0,Dark Stone Grey,Technic Gear 24 Tooth [New Style with Single Axle Hole][Type 1],Gear Wheel Z24,Gears & Gear Racks
+C4,3649.0,34432.0,4285634.0,Medium Stone Grey,Technic Gear 40 Tooth,Gear Wheel 40T,Gears & Gear Racks
+C5,3673.0,,4211807.0,Medium Stone Grey,Technic Pin without Friction Ridges Lengthwise,Connector Peg,Connectors
+C6,3705.0,,370526.0,Black,Technic Axle 4,Cross Axle 4M,Connectors
+C7,3706.0,,370626.0,Black,Tehnic Axle 6,Cross Axle 6M,Connectors
+C8,3707.0,,370726.0,Black,Technic Axle 8,Cross Axle 8M,Connectors
+C9,3708.0,,370826.0,Black,Technic Axle 12,Cross Axle 12M,Connectors
+C10,3713.0,42798.0,4211622.0,Medium Stone Grey,Technic Bush,Bush for Cross Axle,Connectors
+C11,3737.0,,373726.0,Black,Technic Axle 10,Cross Axle 10M,Connectors
+C12,3749.0,6562.0,4666579.0,Brick Yellow,Technic Axle Pin without Friction Ridges Lengthwise,Connector Peg/Cross Axle,Connectors
+E13,3941.0,39223.0,4178398.0,Transparent Light Blue,Brick Round 2 x 2 with Axle Hole,Brick 2x2 Cricle W/ Cross,"Bricks, Round & Angles"
+E14,3941.0,39223.0,611649.0,Transparent Yellow,Brick Round 2 x 2 with Axle Hole,Brick 2x2 Cricle W/ Cross,"Bricks, Round & Angles"
+E15,4032.0,,403226.0,Black,Plate Round 2 x 2 with Axle Hole Type 1 (+ Opening),Plate 2x2 Round,"Plates, Round & Angles"
+C13,4185.0,49750.0,4587275.0,Dark Stone Grey,Technic Wedge Belt Wheel [aka Pulley],Wedge-Belt Wheel Ø24,Modified Tyres & Rims
+C14,4519.0,,4211815.0,Medium Stone Grey,Technic Axle 3,Cross Axle 3M,Connectors
+C15,4716.0,32905.0,4211510.0,Medium Stone Grey,Technic Worm Gear,"Worm Gear, 2 Module, for Gear Wheel",Gears & Gear Racks
+C16,6536.0,40146.0,4211775.0,Medium Stone Grey,Technic Axle and Pin Connector Perpendicular,Cross Block 90°,Modified Technic Beams
+E19,6538.0,,4207456.0,Brick Yellow,Technic Axle Connector Ridged [with x Hole x Orientation],"Cross Axle, Extension M/3 Ribs",Connectors
+E20,6539.0,,4278957.0,Bright Red,Technic Driving Ring 2L,Driving Ring,Connectors
+E21,6542.0,,4558690.0,Dark Stone Grey,Technic Gear 16 Tooth with Clutch [Smooth],Gear Wheel Z16-Ø4.9,Gears & Gear Racks
+E22,6553.0,,4210665.0,Dark Stone Grey,Technic Axle 1.5 with Perpendicular Axle Connector (Technic Pole Reverser Handle),Catch,Connectors
+C17,6558.0,,4514553.0,Bright Blue,"Technic Pin Long with Friction Ridges Lengthwise, 2 Center Slots",Connector Peg W. Friction 3M,Connectors
+E24,6575.0,,4210759.0,Dark Stone Grey,Technic Cam,Comb Wheel,Technic Half Beams
+C18,6587.0,13670.0,6031821.0,Sand Yellow,Technic Axle 3 with Stud,Cross Axle 3M With Knob,Connectors
+C19,6589.0,,4565452.0,Brick Yellow,Technic Gear 12 Tooth Bevel,Conical Wheel Z12,Gears & Gear Racks
+E27,6628.0,66906.0,4184169.0,Black,Technic Pin with Friction Ridges Lengthwise and Towball,Ball With Friction Snap,Connectors
+C20,6629.0,42149.0,4112282.0,Black,Technic Beam 1 x 9 Bent (6 - 4) Thick,Technic Angular Beam 4X6,Technic Beams
+E29,6632.0,65123.0,4211566.0,Medium Stone Grey,Technic Beam 1 x 3 Thin,Technic Lever 3M,Technic Half Beams
+E30,6641.0,51149.0,4270473.0,Bright Red,Technic Changeover Catch - + opening,Technic Change-Over Catch,Connectors
+E31,10197.0,,6005331.0,Dark Stone Grey,Technic Pin Connector Hub with 2 Perpendicular Axles,Beam 1M W. 2 Cross Axles 90°,Connectors
+E32,10288.0,49155.0,6005755.0,Dark Brown,Technic Axle and Pin Connector Triple [120° Offset],3 Branch Crosshole W. Hole,Connectors
+C21,10928.0,,6012451.0,Dark Stone Grey,Technic Gear 8 Tooth [Reinforced],"Gear Wheel T=8, M=1",Gears & Gear Racks
+E34,11478.0,44864.0,6030286.0,Black,Technic Beam 1 x 5 Thin with Axle Holes on Ends,Lever 5M,Technic Half Beams
+E35,11946.0,43499.0,6022750.0,Bright Red,"Technic Panel Fairing #21 Very Small Smooth, Side B",Right Panel 2X5 (N0 21),Technic Beams with Shapes
+E36,11947.0,43500.0,6022752.0,Bright Red,"Technic Panel Fairing #22 Very Small Smooth, Side A",Left Panel 2X5 (NR 22),Technic Beams with Shapes
+E37,11954.0,,6031916.0,Black,Technic Panel Curved 11 x 3 with 10 Pin Holes through Panel Surface,"Bowed Panel 3X11X2 Ø4,85 (X19)",Technic Beams with Shapes
+E38,13971.0,,6044729.0,Medium Stone Grey,Wheel 18 x 8 with Fake Bolts and Deep Spokes with Inner Ring,Rim Narrow Ø18X7 W. Hole Ø4.8,Large Tyres & Rims
+E39,14149.0,,6036424.0,Bright Red,Technic Rubber Foot for Chain Tread 38,Rubber Attachment for Track Element,Modified Tyres & Rims
+E40,44772.0,,4211845.0,Medium Stone Grey,Wheel 56 x 34 Technic Racing Medium with 3 Pin Holes,Rim Ø 56 X 34,Large Tyres & Rims
+E41,32002.0,,6013938.0,Brick Yellow,Technic Pin 3/4,1 1/2 M Connecting Bush,Connectors
+E42,32005.0,,4629920.0,Dark Stone Grey,Technic Link 1 x 6 without Stoppers,Track Rod 6M,Functional Elements
+C22,32009.0,41486.0,4495412.0,White,Technic Beam 1 x 11.5 Double Bent Thick,Double Angular Beam 3X7 45°,Technic Beams
+E44,32009.0,41486.0,4234240.0,Medium Stone Grey,Technic Beam 1 x 11.5 Double Bent Thick,Double Angular Beam 3X7 45°,Technic Beams
+C23,32013.0,42127.0,4107085.0,Black,Technic Axle and Pin Connector Angled #1,"Angle Element, 0° [1]",Connectors
+C24,32014.0,42155.0,4107767.0,Black,Technic Axle and Pin Connector Angled #6 - 90°,"Angle Element, 90° [6]",Connectors
+E47,32015.0,41488.0,4107084.0,Black,Technic Axle and Pin Connector Angled #5 - 112.5°,"Angle Element, 112.5°  [5]",Connectors
+E48,32016.0,42128.0,4107082.0,Black,Technic Axle and Pin Connector Angled #3 - 157.5°,"Angle Element, 157.5°. [3]",Connectors
+C25,32034.0,42134.0,4107783.0,Black,Technic Axle and Pin Connector Angled #2 - 180°,"Angle Element, 180° [2]",Connectors
+E50,32039.0,42135.0,4107081.0,Black,Technic Axle Connector with Axle Hole,Catch W. Cross Hole,Connectors
+C26,32054.0,,4140806.0,Bright Red,"Technic Pin Long with Friction Ridges Lengthwise and Stop Bush [3 Lateral Holes, Big Pin Hole]",2M Fric. Snap W/Cross Hole,Connectors
+C27,32062.0,,4142865.0,Bright Red,Technic Axle 2 Notched,2M Cross Axle W. Groove,Connectors
+C28,32072.0,49135.0,4248204.0,Black,Technic Knob Wheel,Technic Angular Wheel,Gears & Gear Racks
+C29,32073.0,,4211639.0,Medium Stone Grey,Technic Axle 5,Cross Axle 5M,Connectors
+C30,32123.0,42136.0,4239601.0,Bright Yellow,Technic Bush 1/2 Smooth with Axle Hole Semi-Reduced,1/2 Bush,Connectors
+E54,32138.0,65098.0,4119589.0,Black,Technic Pin Double with Axle Hole,Module Bush,Connectors
+C31,32140.0,42137.0,4141270.0,Bright Red,Technic Beam 2 x 4 L-Shape Thick,Technic Ang. Beam 4X2 90°,Technic Beams
+E55,32140.0,42137.0,4211610.0,Medium Stone Grey,Technic Beam 2 x 4 L-Shape Thick,Technic Ang. Beam 4X2 90°,Technic Beams
+C32,32184.0,42142.0,4121667.0,Black,Technic Axle and Pin Connector Perpendicular 3L with Centre Pin Hole,Double Cross Block,Modified Technic Beams
+E58,32198.0,,6031962.0,Brick Yellow,Technic Gear 20 Tooth Bevel,"Bevel, Gear Z20",Gears & Gear Racks
+C33,32269.0,18575.0,4177430.0,Black,Technic Gear 20 Tooth Double Bevel with Axle Hole Type 2 [X Opening],Double Conical Wheel Z20 1M,Gears & Gear Racks
+C34,32270.0,,4177431.0,Black,Technic Gear 12 Tooth Double Bevel,Double Conical Wheel Z12 1M,Gears & Gear Racks
+C35,32271.0,42160.0,4211624.0,Medium Stone Grey,Technic Beam 1 x 9 Bent (7 - 3) Thick,Technic Angular Beam 3X7,Technic Beams
+C36,32278.0,64871.0,4542578.0,White,Technic Beam 1 x 15 Thick,Technic 15M Beam,Technic Beams
+C37,32291.0,42163.0,4140430.0,Black,Technic Axle and Pin Connector Perpendicular Double,Technic Cross Block 2X1,Modified Technic Beams
+C38,32316.0,,4211651.0,Medium Stone Grey,Technic Beam 1 x 5 Thick,Technic 5M Beam,Technic Beams
+C39,32348.0,42165.0,4509912.0,White,Technic Beam 1 x 7 Bent (4 - 4) Thick,Technic Angular Beam 4X4,Technic Beams
+C40,32449.0,63782.0,4142236.0,Black,Technic Beam 1 x 4 Thin,"Lever 1X4, Without Notch",Technic Half Beams
+E63,32494.0,53673.0,4268659.0,Medium Stone Grey,Technic Steering / CV Joint,LT Cardan Ball,Functional Elements
+C41,32498.0,,4255563.0,Black,Technic Gear 36 Tooth Double Bevel,Double Conical Wheel Z36,Gears & Gear Racks
+C42,32523.0,,4142822.0,Black,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+C43,32523.0,,4509376.0,Bright Blue,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+C44,32523.0,,6007973.0,Dark Green,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+C45,32523.0,,4153718.0,Bright Red,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+C46,32523.0,,4153707.0,Bright Yellow,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+E64,32523.0,,4211655.0,Medium Stone Grey,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+E66,32523.0,,4208160.0,White,Technic Beam 1 x 3 Thick,Technic 3M Beam,Technic Beams
+C47,32524.0,,4495930.0,Medium Stone Grey,Technic Beam 1 x 7 Thick,Technic 7M Beam,Technic Beams
+C48,32525.0,64290.0,4611705.0,Medium Stone Grey,Technic Beam 1 x 11 Thick,Technic 11M Beam,Technic Beams
+C49,32526.0,,4211713.0,Medium Stone Grey,Technic Beam 3 x 5 L-Shape Thick,Technic Ang. Beam 3X5 90°,Technic Beams
+C50,32526.0,,4585040.0,White,Technic Beam 3 x 5 L-Shape Thick,Technic Ang. Beam 3X5 90°,Technic Beams
+C51,32556.0,39888.0,4514554.0,Brick Yellow,Technic Pin Long without Friction Ridges,3M Connector Peg,Connectors
+E71,32557.0,,4211714.0,Medium Stone Grey,Technic Pin Connector Perpendicular Long,Technic Crossblock 2X3,Modified Technic Beams
+C52,33299.0,61408.0,4156980.0,Black,Technic Beam 3 x 0.5 Liftarm with Boss and Pin / Crank,2X1X3 Steering Knuckle Arm,Modified Technic Half Beams
+C53,40490.0,64289.0,4211866.0,Medium Stone Grey,Technic Beam 1 x 9 Thick,Technic 9M Beam,Technic Beams
+C54,41239.0,,4522934.0,Medium Stone Grey,Technic Beam 1 x 13 Thick,Technic 13M Beam,Technic Beams
+C55,41669.0,48267.0,4173941.0,White,Technic Tooth 1 x 3 with Axle Hole [Rounded Underside],Bion. Eye,Decoration Elements
+E74,41669.0,48267.0,4185661.0,Bright Red,Technic Tooth 1 x 3 with Axle Hole [Rounded Underside],Bion. Eye,Decoration Elements
+E76,41677.0,44862.0,4211741.0,Medium Stone Grey,Technic Beam 1 x 2 Thin,Technic Lever 2M,Technic Half Beams
+E77,41677.0,44862.0,4164133.0,Black,Technic Beam 1 x 2 Thin,Technic Lever 2M,Technic Half Beams
+C56,41678.0,,4162857.0,Black,Technic Axle and Pin Connector Perpendicular Double Split,Technic Cross Block/Fork 2X2,Modified Technic Half Beams
+C57,41897.0,,6035364.0,Black,Tyre 56 x 28 ZR Street,Tyre Low Wide Ø56 X 28,Large Tyres & Rims
+C58,42003.0,42796.0,4210857.0,Dark Stone Grey,Technic Axle and Pin Connector Perpendicular 3L with 2 Pin Holes,Cross Block 3M,Modified Technic Beams
+E80,42610.0,,4211758.0,Medium Stone Grey,Wheel 11 x 8 with Center Groove,Hub Ø11.2 X 7.84,Connectors
+C59,43093.0,,4206482.0,Bright Blue,Technic Axle Pin with Friction Ridges Lengthwise,Conn.Bush W.Fric./Cross Axle,Connectors
+E82,43675.0,78c19,4631648.0,Transparent Light Blue,"Hose, Ribbed 7mm D. 19L",Corrugated Pipe 152MM,Cables & Hoses
+E83,43857.0,,4211862.0,Medium Stone Grey,Technic Beam 1 x 2 Thick,Technic 2M Beam,Technic Beams
+C60,44294.0,,4211805.0,Medium Stone Grey,Technic Axle 7,Cross Axle 7M,Connectors
+E85,44309.0,,4184286.0,Black,Tyre 43.2 x 22 ZR,Tyre Normal Wide Ø43.2 X 22,Large Tyres & Rims
+E86,44771.0,,4614801.0,Black,Tyre 68.8 x 36 ZR,Tyre Low Wide Ø68.8 X 36,Large Tyres & Rims
+C61,44809.0,,6008527.0,Bright Red,Technic Pin Connector Perpendicular 2 x 2 Bent,HTO V Beam 90°,Modified Technic Beams
+C62,45590.0,,4198367.0,Black,Technic Axle Connector Double Flexible [Rubber],Damper 2M,Connectors
+C63,48989.0,65489.0,4225033.0,Medium Stone Grey,Technic Pin Connector Hub Perpendicular 3L with 4 Pins,Beam 3 Module W/4 Snap,Modified Technic Beams
+E88,50163.0,,4624645.0,Black/Medium Stone Grey,"Technic Turntable Large Type 2, with Black Outside Gear Section (24/56 Teeth) [Complete Assembly]",Turntable Ø4.85,Functional Elements
+C64,55013.0,,4499858.0,Dark Stone Grey,Technic Axle 8 with Stop,Cross Axle 8M With End Stop,Connectors
+C65,55615.0,49130.0,4296059.0,Medium Stone Grey,Technic Pin Connector Hub Perpendicular 3 x 3 Bent with 4 Pins (Pin Ridges Across Part),Angular Beam 90° W.4 Snaps,Modified Technic Beams
+E91,55982.0,,4490127.0,Medium Stone Grey,"Wheel 18 x 14 with Axle Hole, Fake Bolts and Shallow Spokes",Rim Wide 18/14 W. Cross Ø4.8,Large Tyres & Rims
+E92,56145.0,,4297210.0,Medium Stone Grey,"Wheel 30.4 x 20 without Pinholes, with Reinforced Rim",Rim Wide W. Cross 30/20,Large Tyres & Rims
+C66,56908.0,51488.0,4634091.0,Medium Stone Grey,Wheel 43.2 x 26 Technic Racing Small with 6 Pinholes,Rim Wide 43.2 X 26 W 6 Hol.Ø 4.8,Large Tyres & Rims
+C67,57519.0,,4582792.0,Black,Technic Tread Sprocket Wheel Large,"Sprocket, ø40,7",Modified Tyres & Rims
+E95,57539.0,14925.0,6044636.0,Silver Metallic,Flexible Ribbed Hose 8mm Ends 19L,Flex Hose 19M W/3. 18 Stick,Cables & Hoses
+C68,57585.0,,4502595.0,Medium Stone Grey,Technic Axle Connector Hub with 3 Axles at 120°,3-Branch Cross Axle W/Cross H.,Connectors
+E96,59426.0,,4508553.0,Dark Stone Grey,Technic Axle 5.5 with Stop [Rounded Short End],"Cross Axle 5,5 With Stop 1M",Connectors
+C69,59443.0,,4513174.0,Bright Red,Technic Axle Connector Smooth [with x Hole + Orientation],"Cross Axle, Extension, 2M",Connectors
+E98,59900.0,28701.0,4544720.0,Transparent Red,Cone 1 x 1 [Top Groove],Nose Cone Small 1X1,"Bricks, Round & Angles"
+C70,60483.0,40147.0,6006140.0,Black,Technic Beam 1 x 2 Thick with Pin Hole and Axle Hole,Beam 1X2 W/Cross and Hole,Modified Technic Beams
+C71,60484.0,,4552347.0,Black,Technic Beam 3 x 3 T-Shape Thick,T-Beam 3X3 W/Hole Ø4.8,Technic Beams
+C72,60485.0,,4535768.0,Medium Stone Grey,Technic Axle 9,Cross Axle 9M,Connectors
+E102,61903.0,,4525904.0,Medium Stone Grey,Technic Universal Joint 3L [Complete Assembly],Universal Joint,Connectors
+C73,62462.0,29219.0,4526985.0,Medium Stone Grey,Technic Pin Connector Round [Slotted],"Tube, W/ Double 4.85 Hole",Connectors
+E104,62821.0,,4525184.0,Dark Stone Grey,"Technic Gear Differential with Inner Tabs and Closed Center, 28 Bevel Teeth [Beveled Edge]",Differentiale 3M Z 28,Gears & Gear Racks
+C74,63869.0,42191.0,4538007.0,Medium Stone Grey,Technic Axle and Pin Connector Perpendicular Triple,Cross Block 3X2,Modified Technic Beams
+C75,64178.0,,4540797.0,Medium Stone Grey,Technic Beam 5 x 11 Open Center Frame Thick,Beam R. Frame 5X11 Ø4.85,Modified Technic Beams
+C76,64179.0,,4539880.0,Medium Stone Grey,Technic Beam Frame 5 x 7 Open Center Thick,Beam Frame 5X7 Ø 4.85,Modified Technic Beams
+E108,64391.0,,4541325.0,Black,"Technic Panel Fairing # 4 Small Smooth Long, Side B",Right Panel 3X7,Technic Beams with Shapes
+C77,64392.0,,4541326.0,Black,"Technic Panel Fairing #17 Large Smooth, Side A",Left Panel 5X11,Technic Beams with Shapes
+E109,64393.0,,4558731.0,Black,"Technic Panel Fairing #6 Long Smooth, Side B",Right Panel 3X11,Technic Beams with Shapes
+E110,64394.0,,4558775.0,Black,"Technic Panel Fairing #13 Large Short Smooth, Side A",Left Panel 5X7,Technic Beams with Shapes
+E111,64680.0,,4558740.0,Black,"Technic Panel Fairing #14 Large Short Smooth, Side B",Right Panel 5X7,Technic Beams with Shapes
+E112,64681.0,,4558774.0,Black,"Technic Panel Fairing #5 Long Smooth, Side A",Left Panel 3X11,Technic Beams with Shapes
+C78,64682.0,,4543490.0,Black,"Technic Panel Fairing #18 Large Smooth, Side B",Right Panel 5X11,Technic Beams with Shapes
+E113,64683.0,,4541924.0,Black,"Technic Panel Fairing # 3 Small Smooth Long, Side A",Left Panel 3X7,Technic Beams with Shapes
+E114,64781.0,53504.0,4540906.0,Black,Technic Gear Rack 1 x 13 with Axle and Pin Holes,Rack 13M,Gears & Gear Racks
+E115,85543.0,,4544140.0,White,Rubber Belt Small [15mm ID] [Round Cross Section],"V-Belt Ø15, White",Rubber Bands & Strings
+E116,85544.0,,4544143.0,Bright Red,Technic Rubber Belt 24mm,"V-Belt Ø24, Red",Rubber Bands & Strings
+E117,85545.0,70904.0,4544147.0,Bright Blue,Technic Rubber Belt Medium [26mm ID] [Round Cross Section],"V-Belt Ø26, Blue",Rubber Bands & Strings
+E118,85546.0,70905.0,4544151.0,Bright Yellow,Technic Rubber Belt 33mm,"V-Belt Ø33, Yellow",Rubber Bands & Strings
+C79,87080.0,,4566251.0,Black,"Technic Panel Fairing # 1 Small Smooth Short, Side A",Left Panel 3X5,Technic Beams with Shapes
+C80,87082.0,44874.0,4560175.0,Medium Stone Grey,Technic Pin Connector Hub with 2 Pins with Friction Ridges Lengthwise [Big Squared Pin Holes],Double Bush 3M Ø4.9,Modified Technic Beams
+C81,87083.0,,4560177.0,Dark Stone Grey,Technic Axle 4 with Stop,Cross Axle 4M With End Stop,Connectors
+C82,87086.0,,4566249.0,Black,"Technic Panel Fairing # 2 Small Smooth Short, Side B",Right Panel 3x5,Technic Beams with Shapes
+E123,87407.0,,4558690.0,Medium Stone Grey,Technic Gear 20 Tooth Bevel with Pin Hole,Cone Wheel Z20 Ø4.85,Gears & Gear Racks
+E124,87408.0,49137.0,4558692.0,Black,Technic Pin Connector Toggle Joint Smooth Double with Axle and Pin Holes,Beam 3M Ø4.85 W. Fork,Modified Technic Half Beams
+C83,88323.0,42479.0,6014648.0,Black,"Technic Link Tread Wide with Two Pin Holes, Reinforced","Track Element, 5X1, 5",Modified Tyres & Rims
+E126,89201.0,24341.0,4639695.0,Black,"Tyre 24 x 14 Shallow Tread (Tread Small Hub), Band Around Center of Tread",Tyre Low Wide Ø24 X 14,Large Tyres & Rims
+E127,92906.0,,4610374.0,Dark Stone Grey,Technic Steering / CV Joint Axle,Cardan Cup With Cross Axle 2M,Functional Elements
+E128,92908.0,65124.0,4610377.0,Medium Stone Grey,"Technic, Steering Portal Axle Housing",Gear Block 3½ 6½ X 3,Vehicle Parts
+E129,92909.0,,4610378.0,Dark Stone Grey,Technic Steering Hub for Portal Axle,3 Snap Gearblok,Vehicle Parts
+E130,92910.0,65452.0,4610379.0,Medium Stone Grey,Technic Steering Ball Joint Large Open with C-Shape Pivot Frame,Power Joint Ballpart,Modified Technic Beams
+C84,92911.0,65453.0,4610380.0,Dark Stone Grey,Technic Steering Ball Joint Large Receptacle,Power Joint,Modified Technic Beams
+C85,94925.0,,4640536.0,Medium Stone Grey,Technic Gear 16 Tooth Reinforced [New Style],Gear Wheel Z16,Gears & Gear Racks
+E132,98138.0,35380.0,4646864.0,Transparent Red,Tile Round 1 x 1,"Flat Tile 1X1, Round","Plates, Round & Angles"
+E133,98578.0,,6027626.0,Transparent Blue,"Large Figure Weapon Spiked Ball, Half",Half Spike Ball,"Figure, Weapons"
+E134,98585.0,31520.0,4654432.0,Transparent Light Blue,"Large Figure Weapon, Barrel with 2 Pin Holes and 3 Axle Holes",Weapon Barrel,Modified Technic Beams
+E135,98989.0,49491.0,4652234.0,Medium Stone Grey,Technic Axle and Pin Connector Perpendicular Double 4L,Cross Block 2X4,Modified Technic Beams
+E136,99008.0,,4666999.0,Brick Yellow,Technic Axle 4 with Centre Stop,Krydasksel M/Stop 4M,Connectors
+C90,99009.0,,4652235.0,Medium Stone Grey,Technic Turntable Small Top,Lower Part for Turntable Z28,Functional Elements
+C91,99010.0,39892.0,4652236.0,Black,Technic Turntable Small Base (28 Teeth),Upper Part for Turntable Z28,Functional Elements
+C94,99773.0,65193.0,6009019.0,Medium Stone Grey,Technic Beam Triangle Thin [Type II],Triangel,Technic Half Beams
+C95,99948.0,,6023956.0,Silver Metallic,Technic Steel Ball 18 mm,Steel Ball,Electric Parts
