@@ -55,7 +55,7 @@ fun SettingsPage(
             Text(
                 "Font Size",
                 fontSize = textSizeOption.label,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -87,7 +87,7 @@ fun SettingsPage(
             Text(
                 "Color Blind Mode",
                 fontSize = textSizeOption.label,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             ExposedDropdownMenuBox(
@@ -160,7 +160,7 @@ fun SettingsPage(
             Text(
                 "About Us",
                 fontSize = textSizeOption.label,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
 
