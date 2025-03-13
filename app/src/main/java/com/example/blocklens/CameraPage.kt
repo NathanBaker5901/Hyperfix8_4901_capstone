@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.ImageDecoder
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import kotlin.random.Random
 
 
 import android.graphics.Paint
@@ -197,56 +198,41 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
 //convert Uri to Bitmap check API version to use different libraries
 fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     return try {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-            // Use ImageDecoder for API 28+
-            val source = ImageDecoder.createSource(context.contentResolver, uri)
-            ImageDecoder.decodeBitmap(source)
-        } else {
-            // Use BitmapFactory for older versions
-            val inputStream = context.contentResolver.openInputStream(uri)
-            BitmapFactory.decodeStream(inputStream)
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+
+        val exif = ExifInterface(context.contentResolver.openInputStream(uri)!!)
+        val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+
+        // Apply rotation based on EXIF orientation
+        val matrix = Matrix()
+        when (orientation) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
+            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
+            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
         }
 
+        Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true)
     } catch (e: IOException) {
         e.printStackTrace()
         null
     }
-    Log.d("EXIFOrientation", "Image orientation in uriToBitmap: $orientation")
-
 }
 
 //will create a special bitmap that is pre rotated 90 degrees
 //**can add more rotation options in the future if screen rotation is made available for our app**
-fun correctBitmapOrientation(bitmap: Bitmap, uri: Uri, context: Context): Bitmap {
-    // Read the EXIF data to check the orientation
-    val exif = ExifInterface(context.contentResolver.openInputStream(uri)!!)
-    val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
 
-    // Initialize a matrix to apply transformations
-    val matrix = Matrix()
-
-    // Apply the necessary rotation or flip based on EXIF orientation
-    when (orientation) {
-        ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-        ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-        ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-        ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
-        ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
-        // No action for normal orientation
-    }
-
-    // Create a new bitmap with the applied transformation
-    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-}
 
 //function to detect object and handle results
 fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap) -> Unit) {
     context.contentResolver.openInputStream(imageUri)?.use { imageStream ->
         val bitmap = BitmapFactory.decodeStream(imageStream)
-        Log.d("EXIFOrientation", "Image orientation start detect objects: $orientation")
 
-        bitmap?.let {
-            val image = InputImage.fromBitmap(bitmap, 0)
+        // Apply EXIF orientation
+        val rotatedBitmap = uriToBitmap(context, imageUri)
+
+        rotatedBitmap?.let {
+            val image = InputImage.fromBitmap(it, 0)
             val options = ObjectDetectorOptions.Builder()
                 .setDetectorMode(ObjectDetectorOptions.SINGLE_IMAGE_MODE)
                 .enableMultipleObjects()
@@ -257,45 +243,67 @@ fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap)
 
             objectDetector.process(image)
                 .addOnSuccessListener { objects ->
-                    Log.d("ObjectDetection", "Detected objects: ${objects.size}")
-                    if (objects.isEmpty()) {
-                        Log.d("ObjectDetection", "No objects detected")
-                    }
                     val annotatedBitmap = drawBoundingBoxesOnBitmap(it, objects)
                     onDetectionComplete(annotatedBitmap)
                 }
                 .addOnFailureListener { e ->
-                    Log.e("MLKit", "Object detection failed", e)
                     onDetectionComplete(it) // Return original image if detection fails
                 }
-
         }
     }
-    Log.d("EXIFOrientation", "Image orientation end detect objects: $orientation")
 }
 
 //function to display the boxes and labels
 fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObject>): Bitmap {
     val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(mutableBitmap)
+
+    //deque array of colors for the bounding boxes
+    val colorDeque: ArrayDeque<Int> = ArrayDeque(listOf(android.graphics.Color.RED, android.graphics.Color.GREEN, android.graphics.Color.BLUE, android.graphics.Color.YELLOW, android.graphics.Color.MAGENTA, android.graphics.Color.CYAN))
+
     val paint = Paint().apply {
-        color = android.graphics.Color.RED
         style = Paint.Style.STROKE
-        strokeWidth = 2.0f
+        strokeWidth = 4.0f
     }
     val textPaint = Paint().apply {
-        color = android.graphics.Color.WHITE
         textSize = 40f
         typeface = Typeface.DEFAULT_BOLD
     }
+
     for (obj in detectedObjects) {
         val box = obj.boundingBox
         Log.d("BoundingBox", "Drawing bounding box: $box")
+
+        val randomIndex = Random.nextInt(colorDeque.size)
+
+        val colorBox = colorDeque.removeAt(randomIndex)
+
+        paint.color = colorBox
+        textPaint.color = colorBox
+
         canvas.drawRect(box, paint)
 
         obj.labels.forEach { label ->
             Log.d("BoundingBox", "Drawing label: ${label.text}")
-            canvas.drawText(label.text, box.left.toFloat(), box.top.toFloat() - 10, textPaint)
+
+            // Calculate the width and height of the label text
+            val labelWidth = textPaint.measureText(label.text)
+            val labelHeight = textPaint.textSize
+
+            // Create a small box for the label, making sure it stays within the bounding box
+            val labelBox = Rect(
+                box.left,
+                box.top,
+                (box.left + labelWidth + 10).toInt(),  // Adjust the width to fit the label inside
+                (box.top + labelHeight + 10).toInt()  // Adjust the height to fit the label
+            )
+
+            // Draw the black box behind the label
+            val labelBoxPaint = Paint().apply { color = android.graphics.Color.BLACK }
+            canvas.drawRect(labelBox, labelBoxPaint)
+
+            // Draw the label text inside the black box
+            canvas.drawText(label.text, box.left.toFloat(), box.top + labelHeight, textPaint)
         }
     }
 
