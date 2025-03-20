@@ -3,9 +3,10 @@
 
     <style name="Theme.AnimatedSplashScreen" parent="android:Theme.Material.Light.NoActionBar"/>
 
-    <style name="Theme.BlockLens" parent="android:Theme.Material.Light.NoActionBar" />
-
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <item name="android:windowSplashScreenBackground">@color/black</item>
         <item name="postSplashScreenTheme">@style/Theme.AnimatedSplashScreen</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/animated_logo</item>
+
     </style>
 </resources>
