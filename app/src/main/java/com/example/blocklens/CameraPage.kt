@@ -65,6 +65,7 @@ import com.google.mlkit.vision.objects.defaults.ObjectDetectorOptions
 import com.google.mlkit.vision.objects.DetectedObject
 import kotlinx.coroutines.selects.select
 import java.io.IOException
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean, selectedImageUri: Uri?) {
@@ -259,7 +260,7 @@ fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObje
     val canvas = Canvas(mutableBitmap)
 
     //deque array of colors for the bounding boxes
-    val colorDeque: ArrayDeque<Int> = ArrayDeque(listOf(android.graphics.Color.RED, android.graphics.Color.GREEN, android.graphics.Color.BLUE, android.graphics.Color.YELLOW, android.graphics.Color.MAGENTA, android.graphics.Color.CYAN))
+    val colorDeque: ArrayDeque<Int> = ArrayDeque(listOf(android.graphics.Color.RED, "#16B500".toColorInt(), android.graphics.Color.YELLOW, android.graphics.Color.MAGENTA, android.graphics.Color.CYAN))
 
     val paint = Paint().apply {
         style = Paint.Style.STROKE
