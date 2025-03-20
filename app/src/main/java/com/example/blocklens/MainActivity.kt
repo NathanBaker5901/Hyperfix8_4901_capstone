@@ -1,12 +1,15 @@
 package com.example.blocklens
 
 import android.Manifest
+import android.animation.ObjectAnimator
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.animation.OvershootInterpolator
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -33,11 +36,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.getColorScheme
 import com.example.blocklens.ui.theme.getGradientBrush
+
+import androidx.activity.viewModels
+import androidx.core.animation.doOnEnd
 
 
 const val TAG = "BlockLens TEST"
@@ -67,9 +74,53 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+// Variable for splash screen
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Installs splash screen function
+        installSplashScreen().apply {
+            setKeepOnScreenCondition {
+                // Makes sures the splash screen on runs once after the app is open
+            !viewModel.isReady.value
+            }
+
+            // Custom Animations for x value
+            setOnExitAnimationListener{ screen->
+                val zoomX = ObjectAnimator.ofFloat(
+                    screen.iconView,
+                    View.SCALE_X,
+                    0.4f,
+                    0.0f
+                )
+                zoomX.interpolator = OvershootInterpolator()
+                // last for 5 mili seconds
+                zoomX.duration = 500L
+                zoomX.doOnEnd { screen.remove() }
+
+                // Custom animations for Y values
+                val zoomY = ObjectAnimator.ofFloat(
+                    screen.iconView,
+                    View.SCALE_Y,
+                    0.4f,
+                    0.0f
+                )
+                zoomY.interpolator = OvershootInterpolator()
+                // last for 5 mili seconds
+                zoomY.duration = 500L
+                zoomY.doOnEnd { screen.remove() }
+
+                // Starts the animations
+                zoomX.start()
+                zoomY.start()
+
+            }
+
+
+        }
+
 
         // Check/request permissions
         if (!hasAllPermissions()) {
