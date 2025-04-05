@@ -10,23 +10,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
-// Plain text version
-const val ABOUT_US_TEXT = """
-Welcome to Block Lens!
-
-Block Lens is an innovative app designed to help users with color blindness 
-better perceive and interact with the world around them. Our mission is to 
-make technology accessible and inclusive for everyone.
-
-Features:
-- Colorblind mode support (Protanopia, Deuteranopia, Tritanopia)
-- Adjustable font sizes for better readability
-- Easy-to-use interface
-
-Thank you for using Block Lens!
-"""
-
-// Composable version (if you want styled text or links)
+/**
+ * AboutUsContent
+ *
+ * Description: Displays the "About Us" section of the Block Lens app using a vertically arranged
+ * column of styled text components. This includes an introduction, list of key features, and
+ * a detailed mission statement. The content is styled with the app’s current Material theme.
+ *
+ * @return This function does not return a value; it renders a UI layout composed of multiple
+ *         text elements and spacers inside a column.
+ */
 @Composable
 fun AboutUsContent() {
     Column {
