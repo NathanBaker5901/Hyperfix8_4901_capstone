@@ -18,7 +18,23 @@ import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.getGradientBrush
 
-
+/**
+ * SettingsPage
+ *
+ * Description: A composable screen that allows users to customize accessibility preferences,
+ * including font size and color blind mode. It also displays app information through the About Us section
+ * and provides a back navigation button.
+ *
+ * This screen uses:
+ * - [getGradientBrush] to apply a background gradient based on color blind mode
+ * - [AboutUsContent] to display app details
+ *
+ * @param textSizeOption The currently selected text size option (Small, Default, or Large).
+ * @param colorBlindMode The currently selected color blindness mode (Default, Protanopia, Deuteranopia, Tritanopia).
+ * @param onTextSizeChange Callback function triggered when the user selects a new text size.
+ * @param onColorBlindModeChange Callback function triggered when the user selects a new color blind mode.
+ * @param onBack Callback function triggered when the user taps the back button.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPage(
@@ -28,13 +44,16 @@ fun SettingsPage(
     onColorBlindModeChange: (ColorBlindMode) -> Unit,
     onBack: () -> Unit
 ) {
+    // State: Dropdown menu expansion toggle
     var expanded by remember { mutableStateOf(false) }
 
+    // Layout: Main background with gradient based on color mode
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(getGradientBrush(colorBlindMode)) // Apply the gradient
     ) {
+        // Scrollable Content Section
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -157,6 +176,7 @@ fun SettingsPage(
             }
             Spacer(modifier = Modifier.height(24.dp))
 
+            // About Us section
             Text(
                 "About Us",
                 fontSize = textSizeOption.label,
@@ -170,6 +190,7 @@ fun SettingsPage(
 
         }
 
+        // Back button section
         Box(
             modifier = Modifier
                 .fillMaxWidth()
