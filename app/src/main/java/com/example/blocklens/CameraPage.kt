@@ -67,6 +67,8 @@ import kotlinx.coroutines.selects.select
 import java.io.IOException
 import androidx.core.graphics.toColorInt
 
+data class DetectedObjectInfo(val label: String, val confidence: Float, val color: Int)
+
 @Composable
 fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean, selectedImageUri: Uri?) {
     val context = LocalContext.current
@@ -75,7 +77,9 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
     val imageCapture = remember { ImageCapture.Builder().build() }
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isObjectDetectionDone by remember { mutableStateOf(false) }
+    var detectedObjectsInfo by remember { mutableStateOf<List<DetectedObjectInfo>>(emptyList()) }
+    var showImagePopup by remember { mutableStateOf(false) }
+    var showObjectInfoPopup by remember { mutableStateOf(false) }
 
     // Trigger the gallery function automatically only if the shortcut is active
     LaunchedEffect(openGalleryShortcut) {
@@ -142,6 +146,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                                 object : ImageCapture.OnImageSavedCallback {
                                     override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                         capturedImageUri = Uri.fromFile(photoFile)
+                                        showImagePopup = true
                                     }
 
                                     override fun onError(exception: ImageCaptureException) {
@@ -174,25 +179,30 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
         }
     }
 
-    val imageUriForPopUp = capturedImageUri ?: selectedImageUri
-    imageUriForPopUp?.let { uri ->
-        logExifData(context, uri)
-        val bitmap = uriToBitmap(context, uri)
-        if(bitmap != null && !isObjectDetectionDone) {
-            detectObjects(context, uri) { annotatedBitmapResult ->
+    LaunchedEffect(capturedImageUri) {
+        capturedImageUri?.let { uri ->
+            detectObjects(context, uri) { annotatedBitmapResult, objectsInfo ->
                 annotatedBitmap = annotatedBitmapResult
-                isObjectDetectionDone = true
+                detectedObjectsInfo = objectsInfo
+                showImagePopup = true
             }
         }
+    }
 
+    if (showImagePopup) {
+        Log.d("ImagePopUp", "Showing ImagePopUp")
 
+        ImagePopUp(
+            uri = capturedImageUri!!,
+            annotatedBitmap = annotatedBitmap,
+            onClose = { Log.d("ImagePopUp", "Closing ImagePopUp")
+                    showImagePopup = false },
+            onShowObjectInfo = { showObjectInfoPopup = true }
+        )
+    }
 
-        // Show imagePopup with annotated bitmap
-        ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap, onClose = {
-            capturedImageUri = null
-            annotatedBitmap = null
-            isObjectDetectionDone = false
-        })
+    if (showObjectInfoPopup) {
+        ObjectInfoPopup(objectsInfo = detectedObjectsInfo, onClose = { showObjectInfoPopup = false })
     }
 }
 
@@ -225,9 +235,11 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
 
 
 //function to detect object and handle results
-fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap) -> Unit) {
+fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap, List<DetectedObjectInfo>) -> Unit) {
+    Log.d("detectObjects", "Starting object detection for image: $imageUri")
+
     context.contentResolver.openInputStream(imageUri)?.use { imageStream ->
-        val bitmap = BitmapFactory.decodeStream(imageStream)
+        val bitmap = BitmapFactory.decodeStream(imageStream) //might comment out
 
         // Apply EXIF orientation
         val rotatedBitmap = uriToBitmap(context, imageUri)
@@ -242,20 +254,30 @@ fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap)
 
             val objectDetector = ObjectDetection.getClient(options)
 
+
             objectDetector.process(image)
                 .addOnSuccessListener { objects ->
+                    val detectedObjectsInfo = objects.map { obj ->
+                        DetectedObjectInfo(
+                            label = obj.labels.firstOrNull()?.text ?: "Unknown",
+                            confidence = obj.labels.firstOrNull()?.confidence ?: 0f,
+                            color = Color.Red.hashCode()
+                        )
+                    }
+                    // Call the function to draw bounding boxes
                     val annotatedBitmap = drawBoundingBoxesOnBitmap(it, objects)
-                    onDetectionComplete(annotatedBitmap)
+
+                    onDetectionComplete(annotatedBitmap, detectedObjectsInfo)
                 }
-                .addOnFailureListener { e ->
-                    onDetectionComplete(it) // Return original image if detection fails
-                }
+                .addOnFailureListener { _ -> onDetectionComplete(it, emptyList()) }
         }
     }
 }
-
 //function to display the boxes and labels
 fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObject>): Bitmap {
+    Log.d("drawBoundingBoxesOnBitmap", "Drawing bounding boxes for ${detectedObjects.size} objects.")
+
+
     val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(mutableBitmap)
 
@@ -312,7 +334,36 @@ fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObje
 }
 
 @Composable
-fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
+fun ObjectInfoPopup(objectsInfo: List<DetectedObjectInfo>, onClose: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = { Button(onClick = onClose) { Text("Close") } },
+        title = { Text("Detected Objects", color = Color.White) }, // Make title text white
+        text = {
+            Column {
+                objectsInfo.forEach { obj ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.surface) // Black border around each row
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "Label: ${obj.label}\nConfidence: ${obj.confidence}",
+                            fontSize = 16.sp,
+                            color = Color.White // White text color
+                        )
+                    }
+                }
+            }
+        },
+        containerColor = Color.Black // Optional: Make the popup background black for better contrast
+    )
+}
+
+@Composable
+fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit, onShowObjectInfo: () -> Unit) {
     val context = LocalContext.current
     val bitmap = remember(uri) { uriToBitmap(context, uri) }
     val imageToDisplay = annotatedBitmap ?: bitmap
@@ -334,7 +385,8 @@ fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
                     .background(Color.Red, shape = CircleShape)
-                    .clickable { onClose() },
+                    .clickable { Log.d("ImagePopUp", "Close button clicked")
+                        onClose() },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -342,6 +394,14 @@ fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
                     color = Color.White,
                     modifier = Modifier.padding(8.dp)
                 )
+            }
+            Button(
+                onClick = onShowObjectInfo,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter) // Align to the bottom center of the screen
+                    .padding(16.dp) // Optional padding for spacing
+            ) {
+                Text("Show Object Info")
             }
         }
     }

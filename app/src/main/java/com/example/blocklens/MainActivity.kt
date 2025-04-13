@@ -152,8 +152,10 @@ fun BlockLensApp() {
     var openGalleryShortcut by remember { mutableStateOf(false) }
     var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }  // Add this line
     var hasDetectedObjects by remember { mutableStateOf(false) }  // Add this flag
+    var detectedObjectsInfo by remember { mutableStateOf<List<DetectedObjectInfo>>(emptyList()) } // Add object info
+    var showObjectInfoPopup by remember { mutableStateOf(false) }  // Popup visibility flag
+    var showImagePopup by remember { mutableStateOf(false) }  // Popup visibility flag
     val context = LocalContext.current
-
     // Image picker
     val pickImageLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -231,25 +233,29 @@ fun BlockLensApp() {
         val imageUriForPopUp = capturedImageUri ?: selectedImageUri
 
         imageUriForPopUp?.let { uri ->
-            // Pass 'annotatedBitmap' to ImagePopUp
-            if (!hasDetectedObjects) {
-                detectObjects(context, uri) { annotatedBitmapResult ->
-                    annotatedBitmap = annotatedBitmapResult  // Update annotatedBitmap
-                    hasDetectedObjects = true  // Set the flag to true after detection
-                }
+            if (showImagePopup) {
+                ImagePopUp(
+                    uri = uri,
+                    annotatedBitmap = annotatedBitmap,
+                    onClose = {
+                        capturedImageUri = null
+                        selectedImageUri = null
+                        hasDetectedObjects = false  // Reset flag when pop-up closes
+                        showImagePopup = false  // Close image popup
+                    },
+                    onShowObjectInfo = { showObjectInfoPopup = true }
+                )
             }
 
-
-        // If the image URI is set, detect objects and get the annotated bitmap
-            ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap) {
-                capturedImageUri = null
-                selectedImageUri = null
-                hasDetectedObjects = false  // Reset flag when pop-up closes
+            if (showObjectInfoPopup) {
+                ObjectInfoPopup(
+                    objectsInfo = detectedObjectsInfo,
+                    onClose = { showObjectInfoPopup = false }
+                )
             }
         }
     }
 }
-
 @Composable
 fun LandingPage(
     textSizeOption: TextSizeOption,
