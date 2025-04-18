@@ -1,6 +1,5 @@
 package com.example.blocklens
 
-
 import android.R.attr.orientation
 import android.content.Context
 import android.graphics.Bitmap
@@ -10,7 +9,6 @@ import android.graphics.ImageDecoder
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlin.random.Random
-
 
 import android.graphics.Paint
 import android.graphics.Rect
@@ -178,7 +176,7 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
             }
         }
     }
-
+        //NEED TO FIX IMAGE CAPTURE TO HAVE NEW IMAGE TAKEN WHILE DELTING OLD IMAGE
     LaunchedEffect(capturedImageUri) {
         capturedImageUri?.let { uri ->
             detectObjects(context, uri) { annotatedBitmapResult, objectsInfo ->
