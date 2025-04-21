@@ -35,10 +35,7 @@ import androidx.compose.ui.layout.ContentScale
  */
 @Composable
 fun AboutUsContent(textSizeOption: TextSizeOption) {
-    var teamPhotoUri by remember { mutableStateOf<Uri?>(null) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        teamPhotoUri = uri
-    }
+
 
     // Local-only font sizes
     val headingSize = 24.sp
@@ -101,33 +98,6 @@ fun AboutUsContent(textSizeOption: TextSizeOption) {
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Uploadable team photo placeholder
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
-                .clickable { launcher.launch("image/*") },
-            contentAlignment = Alignment.Center
-        ) {
-            if (teamPhotoUri != null) {
-                AsyncImage(
-                    model = teamPhotoUri,
-                    contentDescription = "Team Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text(
-                    text = "Tap to upload team photo",
-                    fontSize = textSizeOption.subtext,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
 
         // Team header
         Text(
