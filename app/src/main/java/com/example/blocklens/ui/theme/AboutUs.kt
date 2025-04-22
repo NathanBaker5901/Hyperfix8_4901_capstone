@@ -140,18 +140,22 @@ fun AboutUsContent(textSizeOption: TextSizeOption) {
         """)
 
         teamMember("Carlos Garcia", """
-            Space for his bio.
-            Mention design, UI/UX, or research roles if relevant.
+            Computer Science major that Grew up asking people
+            for money like a beggar. Then decided to pursue a
+            career in Tech to acquire gratuitous amounts of coin.
         """)
 
         teamMember("Nathan Baker", """
-            Space for his bio.
-            Could include leadership role, technical specialties, etc.
+            Computer Science Major that forewent his Division 1
+            football aspirations to pursue a career in software
+            development.
         """)
 
         teamMember("Joel Hunt", """
-            Space for his bio.
-            Add project vision, full-stack responsibilities, or personal motivation.
+            Computer Science major. Active Navy Reservist with 
+            aspirations of a career in Cyber Security and 
+            Information Security. Enjoys WW2 history and 
+            making homemade Lemonade.
         """)
 
         Spacer(modifier = Modifier.height(16.dp))
