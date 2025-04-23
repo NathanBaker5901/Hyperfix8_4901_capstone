@@ -15,30 +15,12 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import com.example.blocklens.ui.AboutUsContent
 import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
-import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.getGradientBrush
+import android.speech.tts.TextToSpeech
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Shape
 
-
-
-/**
- * SettingsPage
- *
- * Description: A composable screen that allows users to customize accessibility preferences,
- * including font size and color blind mode. It also displays app information through the About Us section
- * and provides a back navigation button.
- *
- * This screen uses:
- * - [getGradientBrush] to apply a background gradient based on color blind mode
- * - [AboutUsContent] to display app details
- *
- * @param textSizeOption The currently selected text size option (Small, Default, or Large).
- * @param colorBlindMode The currently selected color blindness mode (Default, Protanopia, Deuteranopia, Tritanopia).
- * @param onTextSizeChange Callback function triggered when the user selects a new text size.
- * @param onColorBlindModeChange Callback function triggered when the user selects a new color blind mode.
- * @param onBack Callback function triggered when the user taps the back button.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPage(
@@ -48,16 +30,22 @@ fun SettingsPage(
     onColorBlindModeChange: (ColorBlindMode) -> Unit,
     onBack: () -> Unit,
     voiceFeedbackEnabled: Boolean,
-    onToggleVoiceFeedback: (Boolean) -> Unit
+    onToggleVoiceFeedback: (Boolean) -> Unit,
+    tts: TextToSpeech?
 ) {
     var expanded by remember { mutableStateOf(false) }
+
+    fun speak(text: String) {
+        if (voiceFeedbackEnabled) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(getGradientBrush(colorBlindMode)) // Apply the gradient
+            .background(getGradientBrush(colorBlindMode))
     ) {
-        // Scrollable content
         Column(
             modifier = Modifier
                 .weight(1f)
@@ -65,7 +53,6 @@ fun SettingsPage(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title
             Text(
                 "Settings",
                 fontSize = textSizeOption.title,
@@ -74,7 +61,7 @@ fun SettingsPage(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Font Size
+            // Font Size Section
             Text(
                 "Font Size",
                 fontSize = textSizeOption.label,
@@ -82,38 +69,38 @@ fun SettingsPage(
                 color = MaterialTheme.colorScheme.onBackground
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { onTextSizeChange(TextSizeOption.Small) }) {
-                    Text(
-                        "Small",
-                        fontSize = textSizeOption.regular,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                Button(onClick = { onTextSizeChange(TextSizeOption.Default) }) {
-                    Text(
-                        "Default",
-                        fontSize = textSizeOption.regular,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-                Button(onClick = { onTextSizeChange(TextSizeOption.Large) }) {
-                    Text(
-                        "Large",
-                        fontSize = textSizeOption.regular,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+                SpeakButton(
+                    speakLabel = "Small",
+                    displayLabel = "Small",
+                    tts = tts,
+                    voiceFeedbackEnabled = voiceFeedbackEnabled,
+                    onClickAction = { onTextSizeChange(TextSizeOption.Small) }
+                )
+                SpeakButton(
+                    speakLabel = "Default",
+                    displayLabel = "Default",
+                    tts = tts,
+                    voiceFeedbackEnabled = voiceFeedbackEnabled,
+                    onClickAction = { onTextSizeChange(TextSizeOption.Default) }
+                )
+                SpeakButton(
+                    speakLabel = "Large",
+                    displayLabel = "Large",
+                    tts = tts,
+                    voiceFeedbackEnabled = voiceFeedbackEnabled,
+                    onClickAction = { onTextSizeChange(TextSizeOption.Large) }
+                )
             }
-            Spacer(modifier = Modifier.height(24.dp))
 
-            // Color Blind Mode
+                Spacer(modifier = Modifier.height(24.dp))
+
+            // Color Blind Mode Section
             Text(
                 "Color Blind Mode",
                 fontSize = textSizeOption.label,
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
-
             Spacer(modifier = Modifier.height(8.dp))
 
             ExposedDropdownMenuBox(
@@ -146,6 +133,7 @@ fun SettingsPage(
                         disabledIndicatorColor = Color.Transparent
                     )
                 )
+
                 ExposedDropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
@@ -155,6 +143,7 @@ fun SettingsPage(
                         onClick = {
                             onColorBlindModeChange(ColorBlindMode.Default)
                             expanded = false
+                            speak("Default Color Mode")
                         }
                     )
                     DropdownMenuItem(
@@ -162,6 +151,7 @@ fun SettingsPage(
                         onClick = {
                             onColorBlindModeChange(ColorBlindMode.Protanopia)
                             expanded = false
+                            speak("Protanopia Color Mode")
                         }
                     )
                     DropdownMenuItem(
@@ -169,6 +159,7 @@ fun SettingsPage(
                         onClick = {
                             onColorBlindModeChange(ColorBlindMode.Deuteranopia)
                             expanded = false
+                            speak("Deuteranopia Color Mode")
                         }
                     )
                     DropdownMenuItem(
@@ -176,6 +167,7 @@ fun SettingsPage(
                         onClick = {
                             onColorBlindModeChange(ColorBlindMode.Tritanopia)
                             expanded = false
+                            speak("Tritanopia Color Mode")
                         }
                     )
                 }
@@ -192,7 +184,17 @@ fun SettingsPage(
             )
 
             Button(
-                onClick = { onToggleVoiceFeedback(!voiceFeedbackEnabled) }, // ✅ Toggle the real state
+                onClick = {
+                    if (!voiceFeedbackEnabled) {
+                        // Voice Feedback was OFF, and we're turning it ON
+                        tts?.speak("Voice Feedback Enabled", TextToSpeech.QUEUE_FLUSH, null, null)
+                    } else {
+                        // Voice Feedback was ON, and we're turning it OFF
+                        tts?.speak("Voice Feedback Disabled", TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
+
+                    onToggleVoiceFeedback(!voiceFeedbackEnabled)
+                },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (voiceFeedbackEnabled)
                         MaterialTheme.colorScheme.primary
@@ -215,9 +217,11 @@ fun SettingsPage(
                 )
             }
 
+
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            // About Us section
+            // About Us Section
             Text(
                 text = "About Us",
                 fontSize = textSizeOption.label,
@@ -230,28 +234,49 @@ fun SettingsPage(
             AboutUsContent(textSizeOption)
         }
 
-        // Back button section (fixed at the bottom)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-        ) {
-            Button(
-                onClick = onBack,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+        // Back Button
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp)
             ) {
-                Text(
-                    "Back",
-                    fontSize = textSizeOption.regular,
-                    style = MaterialTheme.typography.bodySmall
+                SpeakButton(
+                    speakLabel = "Back to Home Page",
+                    displayLabel = "Back",
+                    tts = tts,
+                    voiceFeedbackEnabled = voiceFeedbackEnabled,
+                    onClickAction = { onBack() },
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
                 )
             }
         }
     }
+
+
+@Composable
+fun SpeakButton(
+    speakLabel: String,
+    displayLabel: String,
+    tts: TextToSpeech?,
+    voiceFeedbackEnabled: Boolean,
+    onClickAction: () -> Unit,
+    modifier: Modifier = Modifier,
+    colors: ButtonColors = ButtonDefaults.buttonColors()
+) {
+    Button(
+        onClick = {
+            if (voiceFeedbackEnabled) {
+                tts?.speak(speakLabel, TextToSpeech.QUEUE_FLUSH, null, null)
+            }
+            onClickAction()
+        },
+        modifier = modifier,
+        colors = colors
+    ) {
+        Text(displayLabel)
+    }
 }
-
-

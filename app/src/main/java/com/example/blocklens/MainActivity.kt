@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import android.view.View
 import android.view.animation.OvershootInterpolator
@@ -15,6 +16,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -24,34 +26,22 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.graphics.BlurEffect
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.draw.shadow
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.blocklens.ui.theme.BlockLensTheme
-import com.example.blocklens.ui.theme.ColorBlindMode
-import com.example.blocklens.ui.theme.TextSizeOption
-import com.example.blocklens.ui.theme.getColorScheme
-import com.example.blocklens.ui.theme.getGradientBrush
-
-import androidx.activity.viewModels
+import com.example.blocklens.ui.theme.*
 import androidx.core.animation.doOnEnd
+import com.example.blocklens.ui.theme.TextSizeOption
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 const val TAG = "BlockLens TEST"
-
-enum class TextSizeOption {
-    Small, Default, Large
-}
 
 class MainActivity : ComponentActivity() {
 
@@ -155,7 +145,23 @@ fun BlockLensApp() {
     var hasDetectedObjects by remember { mutableStateOf(false) }  // Add this flag
     val context = LocalContext.current
 
+    val ttsState = remember { mutableStateOf<TextToSpeech?>(null) }
 
+
+    LaunchedEffect(context) {
+        ttsState.value = TextToSpeech(context) { status ->
+            if (status != TextToSpeech.SUCCESS) {
+                Log.e(TAG, "TTS initialization failed")
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            ttsState.value?.stop()
+            ttsState.value?.shutdown()
+        }
+    }
     // Image picker
     val pickImageLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -196,7 +202,9 @@ fun BlockLensApp() {
                 onNavigateToGallery = {
                     openGalleryShortcut = true
                     currentPage = "camera"
-                }
+                },
+                tts = ttsState.value,
+                voiceFeedbackEnabled = voiceFeedbackEnabled
             )
 
             "settings" -> SettingsPage(
@@ -206,20 +214,19 @@ fun BlockLensApp() {
                 onColorBlindModeChange = { colorBlindMode = it },
                 onBack = { currentPage = "landing" },
                 voiceFeedbackEnabled = voiceFeedbackEnabled,
-                onToggleVoiceFeedback = { voiceFeedbackEnabled = it }
+                onToggleVoiceFeedback = { voiceFeedbackEnabled = it },
+                tts = ttsState.value // ✅ use ttsState.value not tts
             )
-
             "camera" -> CameraPage(
                 onBack = {
                     currentPage = "landing"
-                    openGalleryShortcut = false // Reset the shortcut state
+                    openGalleryShortcut = false
                 },
-                onOpenGallery = {
-                    checkGalleryPermission()
-                },
+                onOpenGallery = { checkGalleryPermission() },
                 openGalleryShortcut = openGalleryShortcut,
-                selectedImageUri = selectedImageUri // Pass the actual selectedImageUri here
-
+                selectedImageUri = selectedImageUri,
+                tts = ttsState.value,
+                voiceFeedbackEnabled = voiceFeedbackEnabled
             )
 
             "gallery" -> GalleryPage(
@@ -260,11 +267,13 @@ fun LandingPage(
     colorBlindMode: ColorBlindMode,
     onNavigateToSettings: () -> Unit,
     onNavigateToCamera: () -> Unit,
-    onNavigateToGallery: () -> Unit
+    onNavigateToGallery: () -> Unit,
+    tts: TextToSpeech?,
+    voiceFeedbackEnabled: Boolean
 ) {
 
-    // sets the colorblind modes
-    val colorScheme = getColorScheme(colorBlindMode)
+    val coroutineScope = rememberCoroutineScope()
+
 
     //setting text sizes
     val fontSize = when (textSizeOption) {
@@ -301,7 +310,19 @@ fun LandingPage(
             // Gallery Icon (Top Center)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 IconButton(
-                    onClick = onNavigateToGallery,
+                    onClick = {
+                        if (voiceFeedbackEnabled) {
+                            tts?.speak("Gallery", TextToSpeech.QUEUE_FLUSH, null, null)
+                            coroutineScope.launch {
+                                delay(1000) // wait after saying "Gallery"
+                                tts?.speak("Please select Photos or Albums", TextToSpeech.QUEUE_FLUSH, null, null)
+                                delay(1000) // wait after saying "Please select Photos or Albums"
+                                onNavigateToGallery()
+                            }
+                        } else {
+                            onNavigateToGallery()
+                        }
+                    },
                     modifier = Modifier.size(96.dp)
                 ) {
                     Icon(
@@ -311,10 +332,10 @@ fun LandingPage(
                         tint = Color.White
                     )
                 }
+
                 Text(
-                    "Gallery",
+                    text = "Gallery",
                     fontSize = textSizeOption.subtext,
-                    //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                     color = Color.White
                 )
             }
@@ -330,20 +351,24 @@ fun LandingPage(
                 // Settings Icon (Bottom Left)
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(
-                        onClick = onNavigateToSettings,
+                        onClick = {
+                            if (voiceFeedbackEnabled) {
+                                tts?.speak("Settings", TextToSpeech.QUEUE_FLUSH, null, null)
+                            }
+                            onNavigateToSettings()
+                        },
                         modifier = Modifier.size(96.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Settings,
                             contentDescription = "Settings",
                             modifier = Modifier.fillMaxSize(),
-                            tint = Color.White //Adjustable Icon color that is overwritten by colorscheme
+                            tint = Color.White
                         )
                     }
                     Text(
-                        "Settings",
+                        text = "Settings",
                         fontSize = textSizeOption.subtext,
-                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                         color = Color.White
                     )
                 }
@@ -351,7 +376,12 @@ fun LandingPage(
                 // Camera Icon (Bottom Right)
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     IconButton(
-                        onClick = onNavigateToCamera,
+                        onClick = {
+                            if (voiceFeedbackEnabled) {
+                                tts?.speak("Camera", TextToSpeech.QUEUE_FLUSH, null, null)
+                            }
+                            onNavigateToCamera()
+                        },
                         modifier = Modifier.size(96.dp)
                     ) {
                         Icon(
@@ -362,9 +392,8 @@ fun LandingPage(
                         )
                     }
                     Text(
-                        "Camera",
+                        text = "Camera",
                         fontSize = textSizeOption.subtext,
-                        //style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Medium),
                         color = Color.White
                     )
                 }
