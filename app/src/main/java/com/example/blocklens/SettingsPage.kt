@@ -17,6 +17,10 @@ import com.example.blocklens.ui.theme.ColorBlindMode
 import com.example.blocklens.ui.theme.TextSizeOption
 import com.example.blocklens.ui.theme.BlockLensTheme
 import com.example.blocklens.ui.theme.getGradientBrush
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
+
+
 
 /**
  * SettingsPage
@@ -42,26 +46,26 @@ fun SettingsPage(
     colorBlindMode: ColorBlindMode,
     onTextSizeChange: (TextSizeOption) -> Unit,
     onColorBlindModeChange: (ColorBlindMode) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    voiceFeedbackEnabled: Boolean,
+    onToggleVoiceFeedback: (Boolean) -> Unit
 ) {
-    // State: Dropdown menu expansion toggle
     var expanded by remember { mutableStateOf(false) }
 
-    // Layout: Main background with gradient based on color mode
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(getGradientBrush(colorBlindMode)) // Apply the gradient
     ) {
-        // Scrollable Content Section
+        // Scrollable content
         Column(
             modifier = Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState()) // Enable vertical scrolling
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Page title
+            // Title
             Text(
                 "Settings",
                 fontSize = textSizeOption.title,
@@ -70,7 +74,7 @@ fun SettingsPage(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
-            //font size section
+            // Font Size
             Text(
                 "Font Size",
                 fontSize = textSizeOption.label,
@@ -102,13 +106,16 @@ fun SettingsPage(
             }
             Spacer(modifier = Modifier.height(24.dp))
 
-            //Dropdown menu for colorblindmode
+            // Color Blind Mode
             Text(
                 "Color Blind Mode",
                 fontSize = textSizeOption.label,
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             ExposedDropdownMenuBox(
                 expanded = expanded,
                 onExpandedChange = { expanded = !expanded }
@@ -125,19 +132,18 @@ fun SettingsPage(
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth(),
-                    //label = { Text("Color Blind Mode") },
                     trailingIcon = {
                         IconButton(onClick = { expanded = !expanded }) {
                             Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
                         }
                     },
                     colors = TextFieldDefaults.textFieldColors(
-                        containerColor = MaterialTheme.colorScheme.surface, // Background color
-                        focusedTextColor = MaterialTheme.colorScheme.onSurface, // Text color when focused
-                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface, // Text color when not focused
-                        focusedIndicatorColor = MaterialTheme.colorScheme.primary, // Underline color when focused
-                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface, // Underline color when not focused
-                        disabledIndicatorColor = Color.Transparent // Remove underline when disabled
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                        focusedIndicatorColor = MaterialTheme.colorScheme.primary,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurface,
+                        disabledIndicatorColor = Color.Transparent
                     )
                 )
                 ExposedDropdownMenu(
@@ -174,11 +180,46 @@ fun SettingsPage(
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Voice Feedback Toggle
+            Text(
+                text = "Voice Feedback",
+                fontSize = textSizeOption.label,
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+
+            Button(
+                onClick = { onToggleVoiceFeedback(!voiceFeedbackEnabled) }, // ✅ Toggle the real state
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (voiceFeedbackEnabled)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                    contentColor = if (voiceFeedbackEnabled)
+                        Color.White
+                    else
+                        Color.LightGray
+                ),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .defaultMinSize(minWidth = 100.dp)
+            ) {
+                Text(
+                    text = if (voiceFeedbackEnabled) "ON" else "OFF",
+                    fontSize = textSizeOption.subtext,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // About Us section
             Text(
-                "About Us",
+                text = "About Us",
                 fontSize = textSizeOption.label,
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
@@ -186,29 +227,31 @@ fun SettingsPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            AboutUsContent() //Calling AboutUs.kt function text
-
+            AboutUsContent(textSizeOption)
         }
 
-        // Back button section
+        // Back button section (fixed at the bottom)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp) // Controls how much space back button takes
+                .padding(10.dp)
         ) {
-            //backbutton
             Button(
                 onClick = onBack,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter),
+                modifier = Modifier.align(Alignment.BottomCenter),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text("Back", fontSize = textSizeOption.regular, style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "Back",
+                    fontSize = textSizeOption.regular,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }
 }
+
 

@@ -144,6 +144,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BlockLensApp() {
+    var voiceFeedbackEnabled by remember { mutableStateOf(false) }
     var textSizeOption by remember { mutableStateOf(TextSizeOption.Default) }
     var colorBlindMode by remember { mutableStateOf(ColorBlindMode.Default) }
     var currentPage by remember { mutableStateOf("landing") }
@@ -153,6 +154,7 @@ fun BlockLensApp() {
     var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }  // Add this line
     var hasDetectedObjects by remember { mutableStateOf(false) }  // Add this flag
     val context = LocalContext.current
+
 
     // Image picker
     val pickImageLauncher =
@@ -202,7 +204,9 @@ fun BlockLensApp() {
                 colorBlindMode = colorBlindMode,
                 onTextSizeChange = { textSizeOption = it },
                 onColorBlindModeChange = { colorBlindMode = it },
-                onBack = { currentPage = "landing" }
+                onBack = { currentPage = "landing" },
+                voiceFeedbackEnabled = voiceFeedbackEnabled,
+                onToggleVoiceFeedback = { voiceFeedbackEnabled = it }
             )
 
             "camera" -> CameraPage(
