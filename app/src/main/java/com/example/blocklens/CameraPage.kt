@@ -66,91 +66,92 @@ import com.google.mlkit.vision.objects.DetectedObject
 import kotlinx.coroutines.selects.select
 import java.io.IOException
 import androidx.core.graphics.toColorInt
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+
 
 @Composable
-fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean, selectedImageUri: Uri?) {
+fun CameraPage(
+    onBack: () -> Unit,
+    onOpenGallery: () -> Unit,
+    openGalleryShortcut: Boolean,
+    selectedImageUri: Uri?,
+    onDetectionResult: (String) -> Unit // ← ADD THIS
+){
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
-    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isObjectDetectionDone by remember { mutableStateOf(false) }
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val url = "https://bd8f-47-186-198-239.ngrok-free.app/detect"
 
-    // Trigger the gallery function automatically only if the shortcut is active
+    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var detectionResultText by remember { mutableStateOf<String?>(null) }
+    var isProcessing by remember { mutableStateOf(false) }
+
     LaunchedEffect(openGalleryShortcut) {
         if (openGalleryShortcut) {
             onOpenGallery()
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
             AndroidView(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
                     cameraProviderFuture.addListener({
                         val cameraProvider = cameraProviderFuture.get()
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
                         val preview = Preview.Builder().build()
-                        preview.surfaceProvider = previewView.surfaceProvider
-
+                        preview.setSurfaceProvider(previewView.surfaceProvider)
                         cameraProvider.unbindAll()
                         cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageCapture
+                            lifecycleOwner, cameraSelector, preview, imageCapture
                         )
                     }, ContextCompat.getMainExecutor(ctx))
                     previewView
-                }
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             )
 
             Row(
-                modifier = Modifier
+                Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Back",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.clickable { onBack() }
-                )
+                Text("Back", Modifier.clickable { onBack() })
                 Box(
                     modifier = Modifier
                         .size(70.dp)
                         .background(Color.Black, CircleShape)
                         .clickable {
                             val photoFile = File(
-                                context.cacheDir,
-                                "captured_image_${System.currentTimeMillis()}.jpg"
+                                context.cacheDir, "captured_image_${System.currentTimeMillis()}.jpg"
                             )
-                            val outputOptions =
-                                ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
+                            val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
                             imageCapture.takePicture(
                                 outputOptions,
                                 ContextCompat.getMainExecutor(context),
                                 object : ImageCapture.OnImageSavedCallback {
-                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                    override fun onImageSaved(result: ImageCapture.OutputFileResults) {
                                         capturedImageUri = Uri.fromFile(photoFile)
+                                        isProcessing = true
+                                        sendImageToServer(context, capturedImageUri!!) { result ->
+                                            detectionResultText = result
+                                            isProcessing = false
+                                        }
                                     }
 
-                                    override fun onError(exception: ImageCaptureException) {
-                                        Toast.makeText(
-                                            context,
-                                            "Failed to capture image",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        Log.e("CameraPage", "Image capture failed", exception)
+                                    override fun onError(exc: ImageCaptureException) {
+                                        Toast.makeText(context, "Capture failed", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             )
@@ -158,43 +159,25 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
-                        modifier = Modifier
+                        Modifier
                             .size(24.dp)
-                            .background(color = Color.White, shape = CircleShape)
+                            .background(Color.White, CircleShape)
                     )
                 }
-
-                Text(
-                    "Gallery",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.clickable { onOpenGallery() }
-                )
+                Text("Gallery", Modifier.clickable { onOpenGallery() })
             }
         }
     }
 
-    val imageUriForPopUp = capturedImageUri ?: selectedImageUri
-    imageUriForPopUp?.let { uri ->
-        logExifData(context, uri)
-        val bitmap = uriToBitmap(context, uri)
-        if(bitmap != null && !isObjectDetectionDone) {
-            detectObjects(context, uri) { annotatedBitmapResult ->
-                annotatedBitmap = annotatedBitmapResult
-                isObjectDetectionDone = true
-            }
-        }
-
-
-
-        // Show imagePopup with annotated bitmap
-        ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap, onClose = {
+    val imageUri = capturedImageUri ?: selectedImageUri
+    imageUri?.let { uri ->
+        ImagePopUp(uri = uri, annotatedBitmap = null, detectionText = detectionResultText) {
             capturedImageUri = null
-            annotatedBitmap = null
-            isObjectDetectionDone = false
-        })
+            detectionResultText = null
+        }
     }
 }
+
 
 //convert Uri to Bitmap check API version to use different libraries
 fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
@@ -220,6 +203,58 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     }
 }
 
+// For server image detection return
+fun sendImageToServer(context: Context, imageUri: Uri, onResult: (String) -> Unit) {
+    val contentResolver = context.contentResolver
+    val fileStream = contentResolver.openInputStream(imageUri)
+
+    fileStream?.use { inputStream ->
+        val fileBytes = inputStream.readBytes()
+
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart(
+                "file", "image.jpg",
+                fileBytes.toRequestBody("image/*".toMediaTypeOrNull())
+            )
+            .build()
+
+        val request = okhttp3.Request.Builder()
+            .url("https://9a4c-47-186-198-239.ngrok-free.app/detect")
+            .post(requestBody)
+            .build()
+
+        val client = okhttp3.OkHttpClient()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                Log.e("FlaskDetect", "Failed to connect", e)
+                (context as? android.app.Activity)?.runOnUiThread {
+                    onResult("❌ Failed to connect to server.")
+                }
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                response.body?.string()?.let { json ->
+                    val jsonObject = org.json.JSONObject(json)
+                    val label = jsonObject.optString("itemDetected", "None")
+                    val confidence = jsonObject.optDouble("confidence", 0.0)
+                    val info = jsonObject.optString("info", "")
+
+                    val resultText = if (label == "null" || label == "None") {
+                        "No object detected."
+                    } else {
+                        "Detected: $label\nConfidence: ${(confidence * 100).toInt()}%\n$info"
+                    }
+
+                    (context as? android.app.Activity)?.runOnUiThread {
+                        onResult(resultText)
+                    }
+                }
+            }
+        })
+    }
+}
 //will create a special bitmap that is pre rotated 90 degrees
 //**can add more rotation options in the future if screen rotation is made available for our app**
 
@@ -312,7 +347,7 @@ fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObje
 }
 
 @Composable
-fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
+fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, detectionText: String?, onClose: () -> Unit) {
     val context = LocalContext.current
     val bitmap = remember(uri) { uriToBitmap(context, uri) }
     val imageToDisplay = annotatedBitmap ?: bitmap
@@ -325,10 +360,22 @@ fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
         ) {
             Image(
                 bitmap = it.asImageBitmap(),
-                contentDescription = "Captured Image with Bounding Boxes",
+                contentDescription = "Captured Image",
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit
             )
+
+            detectionText?.let { text ->
+                Text(
+                    text = text,
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(24.dp)
+                )
+            }
+
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -346,6 +393,7 @@ fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
         }
     }
 }
+
 
 fun logExifData(context: Context, uri: Uri) {
     try {
