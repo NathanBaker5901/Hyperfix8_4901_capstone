@@ -45,6 +45,9 @@ import com.example.blocklens.ui.theme.getGradientBrush
 
 import androidx.activity.viewModels
 import androidx.core.animation.doOnEnd
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 
 const val TAG = "BlockLens TEST"
@@ -144,116 +147,114 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BlockLensApp() {
+    // UI state
     var voiceFeedbackEnabled by remember { mutableStateOf(false) }
-    var textSizeOption by remember { mutableStateOf(TextSizeOption.Default) }
-    var colorBlindMode by remember { mutableStateOf(ColorBlindMode.Default) }
-    var currentPage by remember { mutableStateOf("landing") }
-    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
-    var openGalleryShortcut by remember { mutableStateOf(false) }
-    var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }  // Add this line
-    var hasDetectedObjects by remember { mutableStateOf(false) }  // Add this flag
-    val context = LocalContext.current
+    var textSizeOption       by remember { mutableStateOf(TextSizeOption.Default) }
+    var colorBlindMode       by remember { mutableStateOf(ColorBlindMode.Default) }
+    var currentPage          by remember { mutableStateOf("landing") }
+    var selectedImageUri     by remember { mutableStateOf<Uri?>(null) }
+    var capturedImageUri     by remember { mutableStateOf<Uri?>(null) }
+    var openGalleryShortcut  by remember { mutableStateOf(false) }
+    var annotatedBitmap      by remember { mutableStateOf<Bitmap?>(null) }
+    var hasDetectedObjects   by remember { mutableStateOf(false) }
+    var isLoading            by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val scope   = rememberCoroutineScope()
 
     // Image picker
-    val pickImageLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-            selectedImageUri = uri
-            capturedImageUri = null  // Reset captured image URI when a new image is selected
-            hasDetectedObjects = false  // Reset detection flag when a new image is selected
-        }
+    val pickImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        selectedImageUri   = uri
+        capturedImageUri   = null
+        hasDetectedObjects = false
+    }
 
     // Permission check
-    val checkGalleryPermission: () -> Unit = {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    val checkGalleryPermission = {
+        val perm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             Manifest.permission.READ_MEDIA_IMAGES
-        } else {
+        else
             Manifest.permission.READ_EXTERNAL_STORAGE
-        }
 
-        if (ContextCompat.checkSelfPermission(
-                context,
-                permission
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
+        if (ContextCompat.checkSelfPermission(context, perm) == PackageManager.PERMISSION_GRANTED) {
             pickImageLauncher.launch("image/*")
         } else {
             Toast.makeText(context, "Gallery permission denied", Toast.LENGTH_SHORT).show()
         }
     }
 
-    BlockLensTheme(
-        colorBlindMode = colorBlindMode,
-        textSizeOption = textSizeOption
-    ) {
+    BlockLensTheme(colorBlindMode = colorBlindMode, textSizeOption = textSizeOption) {
+        // Navigation
         when (currentPage) {
             "landing" -> LandingPage(
-                textSizeOption = textSizeOption,
-                colorBlindMode = colorBlindMode,
+                textSizeOption, colorBlindMode,
                 onNavigateToSettings = { currentPage = "settings" },
-                onNavigateToCamera = { currentPage = "camera" },
-                onNavigateToGallery = {
+                onNavigateToCamera   = { currentPage = "camera"  },
+                onNavigateToGallery  = {
                     openGalleryShortcut = true
                     currentPage = "camera"
                 }
             )
-
             "settings" -> SettingsPage(
-                textSizeOption = textSizeOption,
-                colorBlindMode = colorBlindMode,
-                onTextSizeChange = { textSizeOption = it },
+                textSizeOption, colorBlindMode,
+                onTextSizeChange       = { textSizeOption = it },
                 onColorBlindModeChange = { colorBlindMode = it },
-                onBack = { currentPage = "landing" },
-                voiceFeedbackEnabled = voiceFeedbackEnabled,
-                onToggleVoiceFeedback = { voiceFeedbackEnabled = it }
+                onBack                 = { currentPage = "landing" },
+                voiceFeedbackEnabled   = voiceFeedbackEnabled,
+                onToggleVoiceFeedback  = { voiceFeedbackEnabled = it }
             )
-
             "camera" -> CameraPage(
-                onBack = {
+                onBack             = {
                     currentPage = "landing"
-                    openGalleryShortcut = false // Reset the shortcut state
+                    openGalleryShortcut = false
                 },
-                onOpenGallery = {
-                    checkGalleryPermission()
-                },
-                openGalleryShortcut = openGalleryShortcut,
-                selectedImageUri = selectedImageUri // Pass the actual selectedImageUri here
-
+                onOpenGallery      = { checkGalleryPermission() },
+                openGalleryShortcut,
+                selectedImageUri
             )
-
             "gallery" -> GalleryPage(
-                onBack = {
+                onBack          = {
                     currentPage = "landing"
-                    selectedImageUri = null // Reset the URI
+                    selectedImageUri = null
                 },
-                selectedImageUri = selectedImageUri
+                selectedImageUri
             )
         }
 
-        // Show the pop-up for either captured or selected images
+        // Show pop‑up if there's an image
         val imageUriForPopUp = capturedImageUri ?: selectedImageUri
-
         imageUriForPopUp?.let { uri ->
-            // Pass 'annotatedBitmap' to ImagePopUp
-            if (!hasDetectedObjects) {
-                detectObjects(context, uri) { annotatedBitmapResult ->
-                    annotatedBitmap = annotatedBitmapResult  // Update annotatedBitmap
-                    hasDetectedObjects = true  // Set the flag to true after detection
+            val raw    = uriToBitmap(context, uri)
+            val bitmap = raw?.let { correctOrientation(context, it, uri) }
+
+            if (bitmap != null && !hasDetectedObjects) {
+                scope.launch {
+                    isLoading = true
+                    annotatedBitmap = withContext(Dispatchers.IO) {
+                        detectObjects(context, bitmap)
+                    }
+                    hasDetectedObjects = true
+                    isLoading = false
                 }
             }
 
-
-        // If the image URI is set, detect objects and get the annotated bitmap
-            ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap) {
-                capturedImageUri = null
-                selectedImageUri = null
-                hasDetectedObjects = false  // Reset flag when pop-up closes
+            Box(Modifier.fillMaxSize()) {
+                if (isLoading) {
+                    CircularProgressIndicator(Modifier.align(Alignment.Center))
+                }
+                ImagePopUp(
+                    uri             = uri,
+                    annotatedBitmap = annotatedBitmap,
+                    onClose         = {
+                        capturedImageUri   = null
+                        selectedImageUri   = null
+                        hasDetectedObjects = false
+                    }
+                )
             }
         }
     }
 }
-
 @Composable
 fun LandingPage(
     textSizeOption: TextSizeOption,

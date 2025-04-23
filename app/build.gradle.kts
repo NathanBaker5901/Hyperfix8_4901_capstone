@@ -49,6 +49,11 @@ dependencies {
     // Object detection
     implementation("com.google.mlkit:object-detection:17.0.2")
 
+    // Retrofit for making network calls
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
+
     // Material3 (Jetpack Compose)
     implementation("androidx.compose.material3:material3:1.2.0")
 
