@@ -40,6 +40,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
+import androidx.core.graphics.scale
 
 @Composable
 fun CameraPage(
@@ -169,13 +170,17 @@ fun CameraPage(
     }
 }
 
+fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
+    return bitmap.scale(width, height)
+}
 
 fun detectObjects(context: Context, original: Bitmap): Pair<Bitmap, List<String>> {
     val apiKey = "7UhZ8whGm96kLw1QG87H"
     val url = "https://serverless.roboflow.com/infer/workflows/capstone-block-lens/custom-workflow-3"
 
+    val resizedBitmap = resizeBitmap(original, 640, 640)
     val baos = ByteArrayOutputStream().apply {
-        original.compress(Bitmap.CompressFormat.JPEG, 90, this)
+        resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 90, this)
     }
     val base64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP)
 
@@ -212,7 +217,7 @@ fun detectObjects(context: Context, original: Bitmap): Pair<Bitmap, List<String>
                         infoList.add("$cls: ${"%.2f".format(conf * 100)}%")
                     }
 
-                    val annotated = drawRoboflowAnnotations(original, preds)
+                    val annotated = drawRoboflowAnnotations(original, preds, resizedBitmap.width, resizedBitmap.height)
                     annotated to infoList
                 } else {
                     original to listOf("No objects detected.")
@@ -234,7 +239,7 @@ fun extractPredictionInfo(bitmap: Bitmap): List<String> {
     return listOf("Prediction info display not yet implemented.")
 }
 
-fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray): Bitmap {
+fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray, resizedWidth: Int, resizedHeight: Int): Bitmap {
     val result = original.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(result)
     val paint = Paint().apply {
@@ -252,13 +257,15 @@ fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray): Bitmap {
     val backgroundPaint = Paint().apply {
         color = Color.Black.copy(alpha = 0.7f).toArgb()
     }
+    val scaleX = original.width / resizedWidth.toFloat()
+    val scaleY = original.height / resizedHeight.toFloat()
 
     for (i in 0 until preds.length()) {
         val obj = preds.getJSONObject(i)
-        val x = obj.getDouble("x").toFloat()
-        val y = obj.getDouble("y").toFloat()
-        val w = obj.getDouble("width").toFloat()
-        val h = obj.getDouble("height").toFloat()
+        val x = obj.getDouble("x").toFloat() * scaleX
+        val y = obj.getDouble("y").toFloat() * scaleY
+        val w = obj.getDouble("width").toFloat() * scaleX
+        val h = obj.getDouble("height").toFloat() * scaleY
         val cls = obj.getString("class")
         val conf = obj.optDouble("confidence", -1.0)
         val label = "$cls %.2f".format(conf)
