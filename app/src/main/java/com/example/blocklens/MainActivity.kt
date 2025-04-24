@@ -149,25 +149,28 @@ class MainActivity : ComponentActivity() {
 fun BlockLensApp() {
     // UI state
     var voiceFeedbackEnabled by remember { mutableStateOf(false) }
-    var textSizeOption       by remember { mutableStateOf(TextSizeOption.Default) }
-    var colorBlindMode       by remember { mutableStateOf(ColorBlindMode.Default) }
-    var currentPage          by remember { mutableStateOf("landing") }
-    var selectedImageUri     by remember { mutableStateOf<Uri?>(null) }
-    var capturedImageUri     by remember { mutableStateOf<Uri?>(null) }
-    var openGalleryShortcut  by remember { mutableStateOf(false) }
-    var annotatedBitmap      by remember { mutableStateOf<Bitmap?>(null) }
-    var hasDetectedObjects   by remember { mutableStateOf(false) }
-    var isLoading            by remember { mutableStateOf(false) }
+    var textSizeOption by remember { mutableStateOf(TextSizeOption.Default) }
+    var colorBlindMode by remember { mutableStateOf(ColorBlindMode.Default) }
+    var currentPage by remember { mutableStateOf("landing") }
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var openGalleryShortcut by remember { mutableStateOf(false) }
+    var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var hasDetectedObjects by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showObjectInfoPopup by remember { mutableStateOf(false) }
+
 
     val context = LocalContext.current
-    val scope   = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
 
     // Image picker
-    val pickImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        selectedImageUri   = uri
-        capturedImageUri   = null
-        hasDetectedObjects = false
-    }
+    val pickImageLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            selectedImageUri = uri
+            capturedImageUri = null
+            hasDetectedObjects = false
+        }
 
     // Permission check
     val checkGalleryPermission = {
@@ -189,72 +192,53 @@ fun BlockLensApp() {
             "landing" -> LandingPage(
                 textSizeOption, colorBlindMode,
                 onNavigateToSettings = { currentPage = "settings" },
-                onNavigateToCamera   = { currentPage = "camera"  },
-                onNavigateToGallery  = {
+                onNavigateToCamera = { currentPage = "camera" },
+                onNavigateToGallery = {
                     openGalleryShortcut = true
                     currentPage = "camera"
                 }
             )
+
             "settings" -> SettingsPage(
                 textSizeOption, colorBlindMode,
-                onTextSizeChange       = { textSizeOption = it },
+                onTextSizeChange = { textSizeOption = it },
                 onColorBlindModeChange = { colorBlindMode = it },
-                onBack                 = { currentPage = "landing" },
-                voiceFeedbackEnabled   = voiceFeedbackEnabled,
-                onToggleVoiceFeedback  = { voiceFeedbackEnabled = it }
+                onBack = { currentPage = "landing" },
+                voiceFeedbackEnabled = voiceFeedbackEnabled,
+                onToggleVoiceFeedback = { voiceFeedbackEnabled = it }
             )
+
             "camera" -> CameraPage(
-                onBack             = {
+                onBack = {
                     currentPage = "landing"
                     openGalleryShortcut = false
                 },
-                onOpenGallery      = { checkGalleryPermission() },
-                openGalleryShortcut,
-                selectedImageUri
+                onOpenGallery = { checkGalleryPermission() },
+                openGalleryShortcut = openGalleryShortcut,
+                selectedImageUri = selectedImageUri,
+                onClearSelection = {
+                    selectedImageUri = null
+                    capturedImageUri = null
+                    annotatedBitmap = null
+                    hasDetectedObjects = false
+                    showObjectInfoPopup = false
+                },
+                onShowInfo = {
+                    showObjectInfoPopup = true
+                }
             )
+
             "gallery" -> GalleryPage(
-                onBack          = {
+                onBack = {
                     currentPage = "landing"
                     selectedImageUri = null
                 },
                 selectedImageUri
             )
         }
-
-        // Show pop‑up if there's an image
-        val imageUriForPopUp = capturedImageUri ?: selectedImageUri
-        imageUriForPopUp?.let { uri ->
-            val raw    = uriToBitmap(context, uri)
-            val bitmap = raw?.let { correctOrientation(context, it, uri) }
-
-            if (bitmap != null && !hasDetectedObjects) {
-                scope.launch {
-                    isLoading = true
-                    annotatedBitmap = withContext(Dispatchers.IO) {
-                        detectObjects(context, bitmap)
-                    }
-                    hasDetectedObjects = true
-                    isLoading = false
-                }
-            }
-
-            Box(Modifier.fillMaxSize()) {
-                if (isLoading) {
-                    CircularProgressIndicator(Modifier.align(Alignment.Center))
-                }
-                ImagePopUp(
-                    uri             = uri,
-                    annotatedBitmap = annotatedBitmap,
-                    onClose         = {
-                        capturedImageUri   = null
-                        selectedImageUri   = null
-                        hasDetectedObjects = false
-                    }
-                )
-            }
-        }
     }
 }
+
 @Composable
 fun LandingPage(
     textSizeOption: TextSizeOption,
