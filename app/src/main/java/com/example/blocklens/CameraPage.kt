@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.*
 import android.media.ExifInterface
 import android.net.Uri
+import android.speech.tts.TextToSpeech
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
@@ -49,7 +50,8 @@ fun CameraPage(
     openGalleryShortcut: Boolean,
     selectedImageUri: Uri?,
     onClearSelection: () -> Unit,
-    onShowInfo: () -> Unit
+    tts: TextToSpeech?,
+    voiceFeedbackEnabled: Boolean
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -65,6 +67,12 @@ fun CameraPage(
 
     LaunchedEffect(openGalleryShortcut) {
         if (openGalleryShortcut) onOpenGallery()
+    }
+
+    fun speak(text: String) {
+        if (voiceFeedbackEnabled) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -97,12 +105,21 @@ fun CameraPage(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Back", Modifier.clickable { onBack() })
+            Button(
+                onClick = {
+                    speak("Back button clicked")
+                    onBack()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+            ) {
+                Text("Back", color = Color.White)
+            }
             Box(
                 modifier = Modifier
                     .size(70.dp)
                     .background(Color.Black, CircleShape)
                     .clickable {
+                        speak("Capture button clicked")
                         val photoFile =
                             File(context.cacheDir, "captured_${System.currentTimeMillis()}.jpg")
                         val outputOptions =
@@ -128,7 +145,15 @@ fun CameraPage(
             ) {
                 Box(Modifier.size(24.dp).background(Color.White, CircleShape))
             }
-            Text("Gallery", Modifier.clickable { onOpenGallery() })
+            Button(
+                onClick = {
+                    speak("Gallery button clicked")
+                    onOpenGallery()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+            ) {
+                Text("Gallery", color = Color.White)
+            }
         }
     }
 
@@ -147,6 +172,15 @@ fun CameraPage(
                 annotatedBitmap = resultBitmap
                 detectedInfo = infoList
                 isLoading = false
+
+                if (voiceFeedbackEnabled) {
+                    val spokenText = if (infoList.isNotEmpty()) {
+                        infoList.joinToString(". ")
+                    } else {
+                        "No objects detected."
+                    }
+                    speak(spokenText)
+                }
             }
         }
 
@@ -158,17 +192,48 @@ fun CameraPage(
                     onClose = {
                         onClearSelection()
                         isObjectDetectionDone = false
+                        annotatedBitmap = null
+                        capturedImageUri?.let {
+                            val file = File(it.path!!)
+                            if (file.exists()) file.delete()
+                        }
+                        capturedImageUri = null
                     },
-                    onShowObjectInfo = { onShowInfo() }
+                    onShowObjectInfo = {
+                        speak("Show Object Info button clicked")
+                        showObjectInfo = true
+                    }
                 )
-
                 if (showObjectInfo) {
-                    ObjectInfoPopup(detectedInfo) { showObjectInfo = false }
+                    ObjectInfoPopup(
+                        objectsInfo = detectedInfo,
+                        onClose = { showObjectInfo = false },
+                        tts = tts,
+                        voiceFeedbackEnabled = voiceFeedbackEnabled
+                    )
                 }
             }
         }
     }
+
+    if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.7f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
+                Text("Detecting LEGO bricks...", color = Color.White)
+            }
+        }
+    }
+
 }
+
+
 
 fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
     return bitmap.scale(width, height)
@@ -242,23 +307,28 @@ fun extractPredictionInfo(bitmap: Bitmap): List<String> {
 fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray, resizedWidth: Int, resizedHeight: Int): Bitmap {
     val result = original.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(result)
+
+    val scaleX = original.width / resizedWidth.toFloat()
+    val scaleY = original.height / resizedHeight.toFloat()
+    val scaleFactor = original.width / 640f  // Normalize based on your resize dim
+
     val paint = Paint().apply {
         style = Paint.Style.STROKE
-        strokeWidth = 8f
+        strokeWidth = 8f * scaleFactor
         color = Color.Red.toArgb()
         isAntiAlias = true
     }
+
     val textPaint = Paint().apply {
         color = Color.White.toArgb()
-        textSize = 48f
+        textSize = 48f * scaleFactor
         typeface = Typeface.DEFAULT_BOLD
         isAntiAlias = true
     }
+
     val backgroundPaint = Paint().apply {
         color = Color.Black.copy(alpha = 0.7f).toArgb()
     }
-    val scaleX = original.width / resizedWidth.toFloat()
-    val scaleY = original.height / resizedHeight.toFloat()
 
     for (i in 0 until preds.length()) {
         val obj = preds.getJSONObject(i)
@@ -278,7 +348,7 @@ fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray, resizedWidth: In
 
         val textWidth = textPaint.measureText(label)
         val textHeight = textPaint.textSize
-        val padding = 10f
+        val padding = 10f * scaleFactor
         val labelTop = if (top - textHeight - padding < 0) top + textHeight + padding else top
         canvas.drawRect(left, labelTop - textHeight - padding, left + textWidth + 2 * padding, labelTop, backgroundPaint)
         canvas.drawText(label, left + padding, labelTop - padding, textPaint)
@@ -327,7 +397,9 @@ fun ImagePopUp(
             contentScale = ContentScale.Fit
         )
         IconButton(
-            onClick = onClose,
+            onClick = {
+                onClose()
+            },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
@@ -346,17 +418,78 @@ fun ImagePopUp(
     }
 }
 
+data class LegoPart(
+    val id: String,
+    val rebrickableName: String,
+    val officialName: String,
+    val category: String
+)
+
+fun loadLegoPartsFromCSV(context: Context): Map<String, LegoPart> {
+    val assetManager = context.assets
+    val inputStream = assetManager.open("legos.csv") // put your CSV file in `assets`
+    val reader = inputStream.bufferedReader()
+
+    val legoMap = mutableMapOf<String, LegoPart>()
+    reader.useLines { lines ->
+        lines.drop(1).forEach { line ->
+            val tokens = line.split(",").map { it.trim() }
+            if (tokens.size >= 7) {
+                val id = tokens[0]
+                val rebrickableName = tokens[5]
+                val officialName = tokens[6]
+                val category = tokens.getOrNull(7) ?: "Unknown"
+                legoMap[id] = LegoPart(id, rebrickableName, officialName, category)
+            }
+        }
+    }
+
+    return legoMap
+}
+
 @Composable
-fun ObjectInfoPopup(objectsInfo: List<String>, onClose: () -> Unit) {
+fun ObjectInfoPopup(
+    objectsInfo: List<String>,
+    onClose: () -> Unit,
+    tts: TextToSpeech?,
+    voiceFeedbackEnabled: Boolean
+) {
+    val context = LocalContext.current
+    val legoMap = remember { loadLegoPartsFromCSV(context) }
+
+    LaunchedEffect(Unit) {
+        if (voiceFeedbackEnabled) {
+            val spokenText = buildString {
+                append("Detected objects are: ")
+                objectsInfo.forEach { entry ->
+                    val (id, confidence) = entry.split(":").map { it.trim() }
+                    val part = legoMap[id]
+                    append(
+                        part?.let {
+                            "$id, confidence $confidence percent. ${it.rebrickableName}, ${it.officialName}, in category ${it.category}. "
+                        } ?: "$id with confidence $confidence percent. "
+                    )
+                }
+            }
+            tts?.speak(spokenText, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = { Button(onClick = onClose) { Text("Close") } },
-        title = { Text("Detected Objects", color = Color.White) },
+        title = { Text("Detected Object", color = Color.White) },
         text = {
             Column {
-                objectsInfo.forEach { info ->
+                objectsInfo.forEach { entry ->
+                    val (id, confidence) = entry.split(":").map { it.trim() }
+                    val part = legoMap[id]
+                    val detail = part?.let {
+                        "ID: $id\nConfidence: $confidence\n${it.rebrickableName} - ${it.officialName} (${it.category})"
+                    } ?: "$id: $confidence"
+
                     Text(
-                        text = info,
+                        text = detail,
                         fontSize = 16.sp,
                         color = Color.White,
                         modifier = Modifier
@@ -370,6 +503,7 @@ fun ObjectInfoPopup(objectsInfo: List<String>, onClose: () -> Unit) {
         containerColor = Color.Black
     )
 }
+
 
 @Composable
 fun GalleryPage(onBack: () -> Unit, selectedImageUri: Uri?) {
