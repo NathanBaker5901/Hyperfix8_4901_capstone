@@ -2,7 +2,7 @@ package com.example.blocklens
 
 import android.content.Context
 import android.graphics.*
-import android.media.ExifInterface
+import androidx.exifinterface.media.ExifInterface
 import android.net.Uri
 import android.speech.tts.TextToSpeech
 import android.util.Base64
@@ -16,17 +16,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +48,7 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.File
 import androidx.core.graphics.scale
+import androidx.core.content.edit
 
 @Composable
 fun CameraPage(
@@ -57,13 +64,18 @@ fun CameraPage(
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var isObjectDetectionDone by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var detectedInfo by remember { mutableStateOf<List<String>>(emptyList()) }
     var showObjectInfo by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
+
+    val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    var showFirstTimeHint by remember { mutableStateOf(prefs.getBoolean("first_camera_hint", true)) }
 
     LaunchedEffect(openGalleryShortcut) {
         if (openGalleryShortcut) onOpenGallery()
@@ -75,55 +87,71 @@ fun CameraPage(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-        AndroidView(
-            modifier = Modifier.weight(1f),
-            factory = { ctx ->
-                PreviewView(ctx).also { previewView ->
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        val preview = Preview.Builder().build().also {
-                            it.setSurfaceProvider(previewView.surfaceProvider)
-                        }
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            CameraSelector.DEFAULT_BACK_CAMERA,
-                            preview,
-                            imageCapture
-                        )
-                    }, ContextCompat.getMainExecutor(ctx))
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                modifier = Modifier.weight(1f),
+                factory = { ctx ->
+                    PreviewView(ctx).also { previewView ->
+                        cameraProviderFuture.addListener({
+                            val cameraProvider = cameraProviderFuture.get()
+                            val preview = Preview.Builder().build().also {
+                                it.surfaceProvider = previewView.surfaceProvider
+                            }
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                CameraSelector.DEFAULT_BACK_CAMERA,
+                                preview,
+                                imageCapture
+                            )
+                        }, ContextCompat.getMainExecutor(ctx))
+                    }
                 }
-            }
-        )
+            )
+        }
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = {
-                    speak("Back button clicked")
-                    onBack()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
-            ) {
-                Text("Back", color = Color.White)
-            }
+        if (showFirstTimeHint) {
             Box(
                 modifier = Modifier
-                    .size(70.dp)
-                    .background(Color.Black, CircleShape)
+                    .align(Alignment.Center)
+                    .padding(16.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), shape = RoundedCornerShape(12.dp))
+                    .padding(8.dp)
+            ) {
+                Text(
+                    "Tap the button below to take a picture of a LEGO brick.",
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+            }
+
+            LaunchedEffect(Unit) {
+                delay(5000)
+                prefs.edit { putBoolean("first_camera_hint", false) }
+                showFirstTimeHint = false
+            }
+        }
+
+// Bottom row with capture and gallery buttons on the same line
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            // Capture Button - centered
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .align(Alignment.Center)
+                    .background(Color.White, CircleShape)
+                    .clip(CircleShape)
                     .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         speak("Capture button clicked")
-                        val photoFile =
-                            File(context.cacheDir, "captured_${System.currentTimeMillis()}.jpg")
-                        val outputOptions =
-                            ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                        val photoFile = File(context.cacheDir, "captured_${System.currentTimeMillis()}.jpg")
+                        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
                         imageCapture.takePicture(
                             outputOptions,
                             ContextCompat.getMainExecutor(context),
@@ -134,8 +162,7 @@ fun CameraPage(
                                 }
 
                                 override fun onError(exc: ImageCaptureException) {
-                                    Toast.makeText(context, "Capture failed", Toast.LENGTH_SHORT)
-                                        .show()
+                                    Toast.makeText(context, "Capture failed", Toast.LENGTH_SHORT).show()
                                     Log.e("CameraPage", "Capture error", exc)
                                 }
                             }
@@ -143,51 +170,72 @@ fun CameraPage(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Box(Modifier.size(24.dp).background(Color.White, CircleShape))
+                Icon(Icons.Default.Camera, contentDescription = "Capture", tint = Color.Black)
             }
-            Button(
-                onClick = {
-                    speak("Gallery button clicked")
-                    onOpenGallery()
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Black)
+
+            // Gallery Button - to the right
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.CenterEnd) //This puts it to the right of the capture button
+                    .offset(x = (-65).dp)       //Optional: nudge it inward from the edge
+                    .background(Color.DarkGray, RoundedCornerShape(8.dp))
+                    .clickable {
+                        speak("Gallery button clicked")
+                        onOpenGallery()
+                    },
+                contentAlignment = Alignment.Center
             ) {
-                Text("Gallery", color = Color.White)
+                Icon(Icons.Default.Photo, contentDescription = "Gallery", tint = Color.White)
             }
         }
-    }
 
-    val imageUri = capturedImageUri ?: selectedImageUri
-    imageUri?.let { uri ->
-        val rawBitmap = uriToBitmap(context, uri)
-        val bitmap = rawBitmap?.let { correctOrientation(context, it, uri) }
 
-        if (bitmap != null && !isObjectDetectionDone) {
-            isObjectDetectionDone = true
-            scope.launch {
-                isLoading = true
-                val (resultBitmap, infoList) = withContext(Dispatchers.IO) {
-                    detectObjects(context, bitmap)
-                }
-                annotatedBitmap = resultBitmap
-                detectedInfo = infoList
-                isLoading = false
 
-                if (voiceFeedbackEnabled) {
-                    val spokenText = if (infoList.isNotEmpty()) {
-                        infoList.joinToString(". ")
-                    } else {
-                        "No objects detected."
+        // Top-left Back Button
+        IconButton(
+            onClick = {
+                speak("Back button clicked")
+                onBack()
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+        ) {
+            Icon(Icons.Default.Close, contentDescription = "Back", tint = Color.White)
+        }
+
+        // Handle detection / display
+        val imageUri = capturedImageUri ?: selectedImageUri
+        imageUri?.let { uri ->
+            val rawBitmap = uriToBitmap(context, uri)
+            val bitmap = rawBitmap?.let { correctOrientation(context, it, uri) }
+
+            if (bitmap != null && !isObjectDetectionDone) {
+                isObjectDetectionDone = true
+                scope.launch {
+                    isLoading = true
+                    val (resultBitmap, infoList) = withContext(Dispatchers.IO) {
+                        detectObjects(bitmap)
                     }
-                    speak(spokenText)
+                    annotatedBitmap = resultBitmap
+                    detectedInfo = infoList
+                    isLoading = false
+
+                    if (voiceFeedbackEnabled) {
+                        val spokenText = if (infoList.isNotEmpty()) {
+                            infoList.joinToString(". ")
+                        } else {
+                            "No objects detected."
+                        }
+                        speak(spokenText)
+                    }
                 }
             }
-        }
 
-        if (annotatedBitmap != null) {
-            Box(Modifier.fillMaxSize()) {
+            if (annotatedBitmap != null) {
                 ImagePopUp(
-                    uri = uri,
                     annotatedBitmap = annotatedBitmap,
                     onClose = {
                         onClearSelection()
@@ -200,8 +248,13 @@ fun CameraPage(
                         capturedImageUri = null
                     },
                     onShowObjectInfo = {
-                        speak("Show Object Info button clicked")
-                        showObjectInfo = true
+                        if (detectedInfo.isNotEmpty()) {
+                            speak("Show Object Info button clicked")
+                            showObjectInfo = true
+                        } else {
+                            speak("No objects to show.")
+                            Toast.makeText(context, "No objects detected.", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 )
                 if (showObjectInfo) {
@@ -214,32 +267,30 @@ fun CameraPage(
                 }
             }
         }
-    }
 
-    if (isLoading) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.7f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator(color = Color.White)
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Detecting LEGO bricks...", color = Color.White)
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = Color.White)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Detecting LEGO bricks...", color = Color.White)
+                }
             }
         }
     }
-
 }
-
 
 
 fun resizeBitmap(bitmap: Bitmap, width: Int, height: Int): Bitmap {
     return bitmap.scale(width, height)
 }
 
-fun detectObjects(context: Context, original: Bitmap): Pair<Bitmap, List<String>> {
+fun detectObjects(original: Bitmap): Pair<Bitmap, List<String>> {
     val apiKey = "7UhZ8whGm96kLw1QG87H"
     val url = "https://serverless.roboflow.com/infer/workflows/capstone-block-lens/custom-workflow-3"
 
@@ -274,12 +325,24 @@ fun detectObjects(context: Context, original: Bitmap): Pair<Bitmap, List<String>
                     .optJSONArray("predictions")
 
                 return if (preds != null && preds.length() > 0) {
-                    val infoList = mutableListOf<String>()
+                    var topLabel = ""
+                    var topConfidence = -1.0
+
                     for (i in 0 until preds.length()) {
                         val obj = preds.getJSONObject(i)
                         val cls = obj.getString("class")
                         val conf = obj.optDouble("confidence", -1.0)
-                        infoList.add("$cls: ${"%.2f".format(conf * 100)}%")
+
+                        if (conf > topConfidence) {
+                            topConfidence = conf
+                            topLabel = cls
+                        }
+                    }
+
+                    val infoList = if (topLabel.isNotEmpty()) {
+                        listOf("$topLabel: ${"%.2f".format(topConfidence * 100)}%")
+                    } else {
+                        listOf("No objects detected.")
                     }
 
                     val annotated = drawRoboflowAnnotations(original, preds, resizedBitmap.width, resizedBitmap.height)
@@ -299,18 +362,13 @@ fun detectObjects(context: Context, original: Bitmap): Pair<Bitmap, List<String>
 }
 
 
-fun extractPredictionInfo(bitmap: Bitmap): List<String> {
-    // Stub for prediction info (if needed, attach labels during drawing and return from detectObjects)
-    return listOf("Prediction info display not yet implemented.")
-}
-
 fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray, resizedWidth: Int, resizedHeight: Int): Bitmap {
     val result = original.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(result)
 
     val scaleX = original.width / resizedWidth.toFloat()
     val scaleY = original.height / resizedHeight.toFloat()
-    val scaleFactor = original.width / 640f  // Normalize based on your resize dim
+    val scaleFactor = original.width / 640f
 
     val paint = Paint().apply {
         style = Paint.Style.STROKE
@@ -330,8 +388,19 @@ fun drawRoboflowAnnotations(original: Bitmap, preds: JSONArray, resizedWidth: In
         color = Color.Black.copy(alpha = 0.7f).toArgb()
     }
 
+    var topObj: JSONObject? = null
+    var topConfidence = -1.0
     for (i in 0 until preds.length()) {
         val obj = preds.getJSONObject(i)
+        val conf = obj.optDouble("confidence", -1.0)
+        if (conf > topConfidence) {
+            topConfidence = conf
+            topObj = obj
+        }
+    }
+
+
+    topObj?.let { obj ->
         val x = obj.getDouble("x").toFloat() * scaleX
         val y = obj.getDouble("y").toFloat() * scaleY
         val w = obj.getDouble("width").toFloat() * scaleX
@@ -377,7 +446,6 @@ fun correctOrientation(context: Context, bitmap: Bitmap, uri: Uri): Bitmap {
 
 @Composable
 fun ImagePopUp(
-    uri: Uri,
     annotatedBitmap: Bitmap?,
     onClose: () -> Unit,
     onShowObjectInfo: () -> Unit
@@ -396,17 +464,18 @@ fun ImagePopUp(
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Fit
         )
+
+        // "X" close button
         IconButton(
-            onClick = {
-                onClose()
-            },
+            onClick = { onClose() },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
-                .background(Color.Red, CircleShape)
+                .background(Color.Black.copy(alpha = 0.7f), CircleShape)
         ) {
             Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
         }
+
         Button(
             onClick = onShowObjectInfo,
             modifier = Modifier
@@ -417,6 +486,7 @@ fun ImagePopUp(
         }
     }
 }
+
 
 data class LegoPart(
     val id: String,
@@ -482,21 +552,34 @@ fun ObjectInfoPopup(
         text = {
             Column {
                 objectsInfo.forEach { entry ->
-                    val (id, confidence) = entry.split(":").map { it.trim() }
-                    val part = legoMap[id]
-                    val detail = part?.let {
-                        "ID: $id\nConfidence: $confidence\n${it.rebrickableName} - ${it.officialName} (${it.category})"
-                    } ?: "$id: $confidence"
+                    val parts = entry.split(":").map { it.trim() }
+                    if (parts.size == 2) {
+                        val (id, confidence) = parts
+                        val part = legoMap[id]
+                        val detail = part?.let {
+                            "ID: $id\nConfidence: $confidence\n${it.rebrickableName} - ${it.officialName} (${it.category})"
+                        } ?: "$id: $confidence"
 
-                    Text(
-                        text = detail,
-                        fontSize = 16.sp,
-                        color = Color.White,
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .background(Color.DarkGray)
-                            .fillMaxWidth()
-                    )
+                        Text(
+                            text = detail,
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .background(Color.DarkGray)
+                                .fillMaxWidth()
+                        )
+                    } else {
+                        Text(
+                            text = entry, // fallback for unexpected format
+                            fontSize = 16.sp,
+                            color = Color.LightGray,
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .background(Color.DarkGray)
+                                .fillMaxWidth()
+                        )
+                    }
                 }
             }
         },
