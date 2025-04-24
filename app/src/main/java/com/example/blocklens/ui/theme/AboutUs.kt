@@ -35,10 +35,7 @@ import androidx.compose.ui.layout.ContentScale
  */
 @Composable
 fun AboutUsContent(textSizeOption: TextSizeOption) {
-    var teamPhotoUri by remember { mutableStateOf<Uri?>(null) }
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        teamPhotoUri = uri
-    }
+
 
     // Local-only font sizes
     val headingSize = 24.sp
@@ -102,33 +99,6 @@ fun AboutUsContent(textSizeOption: TextSizeOption) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Uploadable team photo placeholder
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(200.dp)
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.2f))
-                .clickable { launcher.launch("image/*") },
-            contentAlignment = Alignment.Center
-        ) {
-            if (teamPhotoUri != null) {
-                AsyncImage(
-                    model = teamPhotoUri,
-                    contentDescription = "Team Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text(
-                    text = "Tap to upload team photo",
-                    fontSize = textSizeOption.subtext,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         // Team header
         Text(
             text = "The Team",
@@ -170,18 +140,22 @@ fun AboutUsContent(textSizeOption: TextSizeOption) {
         """)
 
         teamMember("Carlos Garcia", """
-            Space for his bio.
-            Mention design, UI/UX, or research roles if relevant.
+            Computer Science major that Grew up asking people
+            for money like a beggar. Then decided to pursue a
+            career in Tech to acquire gratuitous amounts of coin.
         """)
 
         teamMember("Nathan Baker", """
-            Space for his bio.
-            Could include leadership role, technical specialties, etc.
+            Computer Science Major that forewent his Division 1
+            football aspirations to pursue a career in software
+            development.
         """)
 
         teamMember("Joel Hunt", """
-            Space for his bio.
-            Add project vision, full-stack responsibilities, or personal motivation.
+            Computer Science major. Active Navy Reservist with 
+            aspirations of a career in Cyber Security and 
+            Information Security. Enjoys WW2 history and 
+            making homemade Lemonade.
         """)
 
         Spacer(modifier = Modifier.height(16.dp))

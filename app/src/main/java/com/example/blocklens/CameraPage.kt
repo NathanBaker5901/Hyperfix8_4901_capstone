@@ -10,6 +10,7 @@ import android.graphics.ImageDecoder
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlin.random.Random
+import android.speech.tts.TextToSpeech
 
 
 import android.graphics.Paint
@@ -68,7 +69,14 @@ import java.io.IOException
 import androidx.core.graphics.toColorInt
 
 @Composable
-fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcut: Boolean, selectedImageUri: Uri?) {
+fun CameraPage(
+    onBack: () -> Unit,
+    onOpenGallery: () -> Unit,
+    openGalleryShortcut: Boolean,
+    selectedImageUri: Uri?,
+    tts: TextToSpeech?,
+    voiceFeedbackEnabled: Boolean
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
@@ -118,11 +126,12 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    "Back",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.clickable { onBack() }
+                SpeakButton(
+                    speakLabel = "Back to Home Page",
+                    displayLabel = "Back",
+                    tts = tts,
+                    voiceFeedbackEnabled = voiceFeedbackEnabled,
+                    onClickAction = { onBack() }
                 )
                 Box(
                     modifier = Modifier
@@ -164,11 +173,17 @@ fun CameraPage(onBack: () -> Unit, onOpenGallery: () -> Unit, openGalleryShortcu
                     )
                 }
 
-                Text(
-                    "Gallery",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.clickable { onOpenGallery() }
+                SpeakButton(
+                    speakLabel = "Gallery",
+                    displayLabel = "Gallery",
+                    tts = tts,
+                    voiceFeedbackEnabled = voiceFeedbackEnabled,
+                    onClickAction = {
+                        if (voiceFeedbackEnabled) {
+                            tts?.speak("Please select Photos or Albums", TextToSpeech.QUEUE_FLUSH, null, null)
+                        }
+                        onOpenGallery()
+                    }
                 )
             }
         }
