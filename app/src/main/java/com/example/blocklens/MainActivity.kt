@@ -225,6 +225,7 @@ fun BlockLensApp() {
                 onOpenGallery = { checkGalleryPermission() },
                 openGalleryShortcut = openGalleryShortcut,
                 selectedImageUri = selectedImageUri,
+                onClearSelection = { selectedImageUri = null }, // <-- ADD THIS LINE !!
                 tts = ttsState.value,
                 voiceFeedbackEnabled = voiceFeedbackEnabled
             )
@@ -236,27 +237,6 @@ fun BlockLensApp() {
                 },
                 selectedImageUri = selectedImageUri
             )
-        }
-
-        // Show the pop-up for either captured or selected images
-        val imageUriForPopUp = capturedImageUri ?: selectedImageUri
-
-        imageUriForPopUp?.let { uri ->
-            // Pass 'annotatedBitmap' to ImagePopUp
-            if (!hasDetectedObjects) {
-                detectObjects(context, uri) { annotatedBitmapResult ->
-                    annotatedBitmap = annotatedBitmapResult  // Update annotatedBitmap
-                    hasDetectedObjects = true  // Set the flag to true after detection
-                }
-            }
-
-
-        // If the image URI is set, detect objects and get the annotated bitmap
-            ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap) {
-                capturedImageUri = null
-                selectedImageUri = null
-                hasDetectedObjects = false  // Reset flag when pop-up closes
-            }
         }
     }
 }

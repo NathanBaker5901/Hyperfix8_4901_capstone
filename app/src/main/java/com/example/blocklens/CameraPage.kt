@@ -49,10 +49,18 @@ import coil.compose.rememberAsyncImagePainter
 import java.io.File
 import java.io.InputStream
 import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.core.graphics.scaleMatrix
 
 import com.example.blocklens.ui.theme.ColorBlindMode
@@ -67,6 +75,8 @@ import com.google.mlkit.vision.objects.DetectedObject
 import kotlinx.coroutines.selects.select
 import java.io.IOException
 import androidx.core.graphics.toColorInt
+import kotlinx.coroutines.delay
+import androidx.core.content.edit
 
 @Composable
 fun CameraPage(
@@ -74,6 +84,7 @@ fun CameraPage(
     onOpenGallery: () -> Unit,
     openGalleryShortcut: Boolean,
     selectedImageUri: Uri?,
+    onClearSelection: () -> Unit,
     tts: TextToSpeech?,
     voiceFeedbackEnabled: Boolean
 ) {
@@ -81,133 +92,208 @@ fun CameraPage(
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
+    val haptic = LocalHapticFeedback.current
+
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList()) }
     var isObjectDetectionDone by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showImagePopup by remember { mutableStateOf(false) }
+    var showObjectInfo by remember { mutableStateOf(false) }
 
-    // Trigger the gallery function automatically only if the shortcut is active
+    val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+    var showFirstTimeHint by remember { mutableStateOf(prefs.getBoolean("first_camera_hint", true)) }
+
     LaunchedEffect(openGalleryShortcut) {
-        if (openGalleryShortcut) {
-            onOpenGallery()
+        if (openGalleryShortcut) onOpenGallery()
+    }
+
+    fun speak(text: String) {
+        if (voiceFeedbackEnabled) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
         }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             AndroidView(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                modifier = Modifier.weight(1f),
                 factory = { ctx ->
-                    val previewView = PreviewView(ctx)
-                    cameraProviderFuture.addListener({
-                        val cameraProvider = cameraProviderFuture.get()
-                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-                        val preview = Preview.Builder().build()
-                        preview.surfaceProvider = previewView.surfaceProvider
-
-                        cameraProvider.unbindAll()
-                        cameraProvider.bindToLifecycle(
-                            lifecycleOwner,
-                            cameraSelector,
-                            preview,
-                            imageCapture
-                        )
-                    }, ContextCompat.getMainExecutor(ctx))
-                    previewView
+                    PreviewView(ctx).also { previewView ->
+                        cameraProviderFuture.addListener({
+                            val cameraProvider = cameraProviderFuture.get()
+                            val preview = Preview.Builder().build().also {
+                                it.surfaceProvider = previewView.surfaceProvider
+                            }
+                            cameraProvider.unbindAll()
+                            cameraProvider.bindToLifecycle(
+                                lifecycleOwner,
+                                CameraSelector.DEFAULT_BACK_CAMERA,
+                                preview,
+                                imageCapture
+                            )
+                        }, ContextCompat.getMainExecutor(ctx))
+                    }
                 }
             )
+        }
 
-            Row(
+        if (showFirstTimeHint) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .align(Alignment.Center)
+                    .padding(16.dp)
+                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                    .padding(8.dp)
             ) {
-                SpeakButton(
-                    speakLabel = "Back to Home Page",
-                    displayLabel = "Back",
-                    tts = tts,
-                    voiceFeedbackEnabled = voiceFeedbackEnabled,
-                    onClickAction = { onBack() }
+                Text(
+                    "Tap the button below to take a picture of a LEGO brick.",
+                    color = Color.White,
+                    fontSize = 14.sp
                 )
-                Box(
-                    modifier = Modifier
-                        .size(70.dp)
-                        .background(Color.Black, CircleShape)
-                        .clickable {
-                            val photoFile = File(
-                                context.cacheDir,
-                                "captured_image_${System.currentTimeMillis()}.jpg"
-                            )
-                            val outputOptions =
-                                ImageCapture.OutputFileOptions.Builder(photoFile).build()
+            }
 
-                            imageCapture.takePicture(
-                                outputOptions,
-                                ContextCompat.getMainExecutor(context),
-                                object : ImageCapture.OnImageSavedCallback {
-                                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                                        capturedImageUri = Uri.fromFile(photoFile)
-                                    }
+            LaunchedEffect(Unit) {
+                delay(5000)
+                prefs.edit().putBoolean("first_camera_hint", false).apply()
+                showFirstTimeHint = false
+            }
+        }
 
-                                    override fun onError(exception: ImageCaptureException) {
-                                        Toast.makeText(
-                                            context,
-                                            "Failed to capture image",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                        Log.e("CameraPage", "Image capture failed", exception)
-                                    }
+        // Capture + Gallery Buttons
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .align(Alignment.Center)
+                    .background(Color.White, CircleShape)
+                    .clip(CircleShape)
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        speak("Capture button clicked")
+                        val photoFile = File(context.cacheDir, "captured_${System.currentTimeMillis()}.jpg")
+                        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+                        imageCapture.takePicture(
+                            outputOptions,
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                    capturedImageUri = Uri.fromFile(photoFile)
                                 }
-                            )
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(24.dp)
-                            .background(color = Color.White, shape = CircleShape)
-                    )
-                }
 
-                SpeakButton(
-                    speakLabel = "Gallery",
-                    displayLabel = "Gallery",
-                    tts = tts,
-                    voiceFeedbackEnabled = voiceFeedbackEnabled,
-                    onClickAction = {
-                        if (voiceFeedbackEnabled) {
-                            tts?.speak("Please select Photos or Albums", TextToSpeech.QUEUE_FLUSH, null, null)
-                        }
+                                override fun onError(exc: ImageCaptureException) {
+                                    Toast.makeText(context, "Capture failed", Toast.LENGTH_SHORT).show()
+                                    Log.e("CameraPage", "Capture error", exc)
+                                }
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Camera, contentDescription = "Capture", tint = Color.Black)
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.CenterEnd)
+                    .offset(x = (-65).dp)
+                    .background(Color.DarkGray, RoundedCornerShape(8.dp))
+                    .clickable {
+                        speak("Gallery button clicked")
                         onOpenGallery()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Photo, contentDescription = "Gallery", tint = Color.White)
+            }
+        }
+
+        // Back Button
+        IconButton(
+            onClick = {
+                speak("Back button clicked")
+                onBack()
+            },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.6f), CircleShape)
+        ) {
+            Icon(Icons.Default.Close, contentDescription = "Back", tint = Color.White)
+        }
+
+        val imageUriForDetection = capturedImageUri ?: selectedImageUri
+        imageUriForDetection?.let { uri ->
+            val bitmap = uriToBitmap(context, uri)
+
+            if (bitmap != null && !isObjectDetectionDone) {
+                isObjectDetectionDone = true
+                isLoading = true
+
+                detectObjects(context, uri) { annotatedBitmapResult, detectedObjs ->
+                    annotatedBitmap = annotatedBitmapResult
+                    detectedObjects = detectedObjs
+                    isLoading = false
+
+                    if (voiceFeedbackEnabled && detectedObjs.isNotEmpty()) {
+                        val labelTexts = detectedObjs.flatMap { it.labels }
+                            .joinToString(separator = ", ") { it.text }
+                        speak("Detected: $labelTexts")
+                    }
+
+                    showImagePopup = true
+                }
+            }
+
+            if (showImagePopup && annotatedBitmap != null) {
+                ImagePopUp(
+                    annotatedBitmap = annotatedBitmap,
+                    onClose = {
+                        showImagePopup = false
+                        capturedImageUri = null
+                        annotatedBitmap = null
+                        detectedObjects = emptyList()
+                        isObjectDetectionDone = false
+                        showObjectInfo = false
+                        onClearSelection() // <-- 🛠️ Important: clear uploaded gallery image!
+                    },
+                    onShowObjectInfo = {
+                        showObjectInfo = true
                     }
                 )
             }
         }
-    }
 
-    val imageUriForPopUp = capturedImageUri ?: selectedImageUri
-    imageUriForPopUp?.let { uri ->
-        logExifData(context, uri)
-        val bitmap = uriToBitmap(context, uri)
-        if(bitmap != null && !isObjectDetectionDone) {
-            detectObjects(context, uri) { annotatedBitmapResult ->
-                annotatedBitmap = annotatedBitmapResult
-                isObjectDetectionDone = true
-            }
+        if (showObjectInfo) {
+            ObjectInfoPopup(
+                detectedObjects = detectedObjects,
+                onClose = { showObjectInfo = false },
+                tts = tts,
+                voiceFeedbackEnabled = voiceFeedbackEnabled
+            )
         }
 
-
-
-        // Show imagePopup with annotated bitmap
-        ImagePopUp(uri = uri, annotatedBitmap = annotatedBitmap, onClose = {
-            capturedImageUri = null
-            annotatedBitmap = null
-            isObjectDetectionDone = false
-        })
+        if (isLoading) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.7f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(color = Color.White)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Detecting LEGO bricks...", color = Color.White)
+                }
+            }
+        }
     }
 }
 
@@ -240,11 +326,12 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
 
 
 //function to detect object and handle results
-fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap) -> Unit) {
+fun detectObjects(
+    context: Context,
+    imageUri: Uri,
+    onDetectionComplete: (Bitmap, List<DetectedObject>) -> Unit
+) {
     context.contentResolver.openInputStream(imageUri)?.use { imageStream ->
-        val bitmap = BitmapFactory.decodeStream(imageStream)
-
-        // Apply EXIF orientation
         val rotatedBitmap = uriToBitmap(context, imageUri)
 
         rotatedBitmap?.let {
@@ -260,10 +347,11 @@ fun detectObjects(context: Context, imageUri: Uri, onDetectionComplete: (Bitmap)
             objectDetector.process(image)
                 .addOnSuccessListener { objects ->
                     val annotatedBitmap = drawBoundingBoxesOnBitmap(it, objects)
-                    onDetectionComplete(annotatedBitmap)
+                    onDetectionComplete(annotatedBitmap, objects)
                 }
                 .addOnFailureListener { e ->
-                    onDetectionComplete(it) // Return original image if detection fails
+                    // If detection fails, return the original bitmap and an empty list
+                    onDetectionComplete(it, emptyList())
                 }
         }
     }
@@ -327,39 +415,120 @@ fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObje
 }
 
 @Composable
-fun ImagePopUp(uri: Uri, annotatedBitmap: Bitmap?, onClose: () -> Unit) {
-    val context = LocalContext.current
-    val bitmap = remember(uri) { uriToBitmap(context, uri) }
-    val imageToDisplay = annotatedBitmap ?: bitmap
+fun ImagePopUp(
+    annotatedBitmap: Bitmap?,
+    onClose: () -> Unit,
+    onShowObjectInfo: () -> Unit
+) {
+    if (annotatedBitmap == null) return
 
-    imageToDisplay?.let {
-        Box(
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            bitmap = annotatedBitmap.asImageBitmap(),
+            contentDescription = "Captured Image",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit
+        )
+
+        IconButton(
+            onClick = { onClose() },
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black)
+                .align(Alignment.TopEnd)
+                .padding(16.dp)
+                .background(Color.Black.copy(alpha = 0.7f), CircleShape)
         ) {
-            Image(
-                bitmap = it.asImageBitmap(),
-                contentDescription = "Captured Image with Bounding Boxes",
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit
-            )
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp)
-                    .background(Color.Red, shape = CircleShape)
-                    .clickable { onClose() },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "X",
-                    color = Color.White,
-                    modifier = Modifier.padding(8.dp)
-                )
-            }
+            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+        }
+
+        Button(
+            onClick = onShowObjectInfo,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        ) {
+            Text("Show Object Info")
         }
     }
+}
+
+
+@Composable
+fun ObjectInfoPopup(
+    detectedObjects: List<DetectedObject>,
+    onClose: () -> Unit,
+    tts: TextToSpeech?,
+    voiceFeedbackEnabled: Boolean
+) {
+    LaunchedEffect(Unit) {
+        if (voiceFeedbackEnabled) {
+            val spokenText = if (detectedObjects.isNotEmpty()) {
+                buildString {
+                    detectedObjects.forEach { obj ->
+                        obj.labels.forEach { label ->
+                            append("${label.text}, confidence ${"%.1f".format(label.confidence * 100)} percent. ")
+                        }
+                    }
+                }
+            } else {
+                "No objects detected."
+            }
+            tts?.speak(spokenText, TextToSpeech.QUEUE_FLUSH, null, null)
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = {
+            Button(onClick = onClose) {
+                Text("Close")
+            }
+        },
+        title = { Text("Detected Objects", color = Color.White) },
+        text = {
+            Column {
+                if (detectedObjects.isEmpty()) {
+                    Text(
+                        "No objects detected.",
+                        color = Color.White,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .background(Color.DarkGray)
+                            .fillMaxWidth()
+                    )
+                } else {
+                    detectedObjects.forEach { obj ->
+                        if (obj.labels.isNotEmpty()) {
+                            obj.labels.forEach { label ->
+                                Text(
+                                    text = "Label: ${label.text}\nConfidence: ${"%.2f".format(label.confidence * 100)}%",
+                                    color = Color.White,
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .background(Color.DarkGray)
+                                        .fillMaxWidth()
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = "Unknown object",
+                                color = Color.White,
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .background(Color.DarkGray)
+                                    .fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        containerColor = Color.Black
+    )
 }
 
 fun logExifData(context: Context, uri: Uri) {
