@@ -78,6 +78,31 @@ import androidx.core.graphics.toColorInt
 import kotlinx.coroutines.delay
 import androidx.core.content.edit
 
+/**
+ * CameraPage
+ *
+ * Description: Main UI for capturing images using the device's back camera, launching the gallery,
+ * detecting LEGO bricks, and displaying detection results via popups. Supports voice feedback,
+ * haptic feedback, and a one-time hint overlay for first-time users.
+ *
+ * @Composable: Indicates this is a Jetpack Compose UI component.
+ *
+ * @param onBack: () -> Unit – called when the user taps the back button.
+ *
+ * @param onOpenGallery: () -> Unit – launches the gallery picker or shortcut for selecting images.
+ *
+ * @param openGalleryShortcut: Boolean – when true, triggers gallery open on load (used for shortcuts).
+ *
+ * @param selectedImageUri: Uri? – URI of the image selected from the gallery (if any).
+ *
+ * @param onClearSelection: () -> Unit – resets the selected image state in parent scope when popup is closed.
+ *
+ * @param tts: TextToSpeech? – instance used to provide audio feedback when enabled.
+ *
+ * @param voiceFeedbackEnabled: Boolean – determines whether TTS should be used for user feedback.
+ *
+ * @return Unit: renders the full camera interaction screen, including all detection and control logic.
+ */
 @Composable
 fun CameraPage(
     onBack: () -> Unit,
@@ -88,12 +113,14 @@ fun CameraPage(
     tts: TextToSpeech?,
     voiceFeedbackEnabled: Boolean
 ) {
+    // Context and camera setup
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
     val haptic = LocalHapticFeedback.current
 
+    // State variables
     var capturedImageUri by remember { mutableStateOf<Uri?>(null) }
     var annotatedBitmap by remember { mutableStateOf<Bitmap?>(null) }
     var detectedObjects by remember { mutableStateOf<List<DetectedObject>>(emptyList()) }
@@ -102,13 +129,16 @@ fun CameraPage(
     var showImagePopup by remember { mutableStateOf(false) }
     var showObjectInfo by remember { mutableStateOf(false) }
 
+    // Preference to show first-time hint
     val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
     var showFirstTimeHint by remember { mutableStateOf(prefs.getBoolean("first_camera_hint", true)) }
 
+    // Launch gallery if shortcut triggered
     LaunchedEffect(openGalleryShortcut) {
         if (openGalleryShortcut) onOpenGallery()
     }
 
+    // Text-to-speech helper
     fun speak(text: String) {
         if (voiceFeedbackEnabled) {
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
@@ -116,6 +146,7 @@ fun CameraPage(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Camera preview display
         Column(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 modifier = Modifier.weight(1f),
@@ -139,6 +170,7 @@ fun CameraPage(
             )
         }
 
+        // One-time hint overlay
         if (showFirstTimeHint) {
             Box(
                 modifier = Modifier
@@ -168,6 +200,7 @@ fun CameraPage(
                 .padding(bottom = 32.dp)
                 .align(Alignment.BottomCenter)
         ) {
+            // Capture button
             Box(
                 modifier = Modifier
                     .size(72.dp)
@@ -199,6 +232,7 @@ fun CameraPage(
                 Icon(Icons.Default.Camera, contentDescription = "Capture", tint = Color.Black)
             }
 
+            // Gallery button
             Box(
                 modifier = Modifier
                     .size(48.dp)
@@ -229,6 +263,7 @@ fun CameraPage(
             Icon(Icons.Default.Close, contentDescription = "Back", tint = Color.White)
         }
 
+        // Image detection + popup logic
         val imageUriForDetection = capturedImageUri ?: selectedImageUri
         imageUriForDetection?.let { uri ->
             val bitmap = uriToBitmap(context, uri)
@@ -252,6 +287,7 @@ fun CameraPage(
                 }
             }
 
+            // Annotated image display popup
             if (showImagePopup && annotatedBitmap != null) {
                 ImagePopUp(
                     annotatedBitmap = annotatedBitmap,
@@ -262,7 +298,7 @@ fun CameraPage(
                         detectedObjects = emptyList()
                         isObjectDetectionDone = false
                         showObjectInfo = false
-                        onClearSelection() // <-- 🛠️ Important: clear uploaded gallery image!
+                        onClearSelection() // reset gallery image selection
                     },
                     onShowObjectInfo = {
                         showObjectInfo = true
@@ -271,6 +307,7 @@ fun CameraPage(
             }
         }
 
+        // Object info popup
         if (showObjectInfo) {
             ObjectInfoPopup(
                 detectedObjects = detectedObjects,
@@ -280,6 +317,7 @@ fun CameraPage(
             )
         }
 
+        // Loading overlay
         if (isLoading) {
             Box(
                 modifier = Modifier
@@ -297,7 +335,18 @@ fun CameraPage(
     }
 }
 
-//convert Uri to Bitmap check API version to use different libraries
+/**
+ * uriToBitmap
+ *
+ * Description: Converts a content URI to a properly oriented Bitmap image by checking and applying
+ * EXIF orientation metadata. This ensures the image appears correctly when displayed in the app.
+ *
+ * @param context: Context – the calling context used to access the content resolver.
+ *
+ * @param uri: Uri – the content URI pointing to the image to be decoded.
+ *
+ * @return Bitmap? – a rotated bitmap if successful, or null if the image couldn't be loaded.
+ */
 fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
     return try {
         val inputStream = context.contentResolver.openInputStream(uri)
