@@ -414,44 +414,62 @@ fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObje
     return mutableBitmap
 }
 
+/**
+ * ImagePopUp
+ *
+ * Description: Displays a full-screen popup showing the captured and annotated image.
+ * Includes a close button and a "Show Object Info" button at the bottom.
+ *
+ * @Composable: Indicates this is a Jetpack Compose UI component.
+ *
+ * @param annotatedBitmap: Bitmap? – optional image passed in to be displayed in the popup.
+ *      If null, the composable exits early and does not render anything.
+ *
+ * @param onClose: () -> Unit – lambda triggered when the user taps the close icon.
+ *
+ * @param onShowObjectInfo: () -> Unit – lambda triggered when the user taps the "Show Object Info" button.
+ *
+ * @return Unit: renders the full-screen popup with image and controls.
+ */
 @Composable
 fun ImagePopUp(
     annotatedBitmap: Bitmap?,
     onClose: () -> Unit,
     onShowObjectInfo: () -> Unit
 ) {
+    // Exits early if there's no image to show
     if (annotatedBitmap == null) return
 
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black),
-        contentAlignment = Alignment.Center
+            .fillMaxSize() // Occupy entire screen
+            .background(Color.Black), // Black background to highlight image
+        contentAlignment = Alignment.Center // Center image content
     ) {
         Image(
-            bitmap = annotatedBitmap.asImageBitmap(),
-            contentDescription = "Captured Image",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
+            bitmap = annotatedBitmap.asImageBitmap(), // Convert Bitmap to ImageBitmap for Compose rendering
+            contentDescription = "Captured Image", // Accessibility label
+            modifier = Modifier.fillMaxSize(), // Fill available space
+            contentScale = ContentScale.Fit // Maintain aspect ratio within bounds
         )
 
         IconButton(
-            onClick = { onClose() },
+            onClick = { onClose() }, // Triggers onClose lambda
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(16.dp)
-                .background(Color.Black.copy(alpha = 0.7f), CircleShape)
+                .align(Alignment.TopEnd) // Places button at top-right corner
+                .padding(16.dp) // Gives some breathing room from edge
+                .background(Color.Black.copy(alpha = 0.7f), CircleShape) // Semi-transparent black circle background
         ) {
-            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+            Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White) // White close icon
         }
 
         Button(
-            onClick = onShowObjectInfo,
+            onClick = onShowObjectInfo, // Triggers onShowObjectInfo lambda
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp)
+                .align(Alignment.BottomCenter) // Places button at bottom center of screen
+                .padding(16.dp) // Space from screen bottom
         ) {
-            Text("Show Object Info")
+            Text("Show Object Info") // Button label
         }
     }
 }
@@ -544,31 +562,49 @@ fun logExifData(context: Context, uri: Uri) {
     }
 }
 
+/**
+ * GalleryPage
+ *
+ * Description: Displays a simple gallery page with a title, optional selected image,
+ * and a button to go back to the previous screen.
+ *
+ * @Composable: Indicates this is a Jetpack Compose UI component.
+ *
+ * @param onBack: () -> Unit – lambda function triggered when the "Back" button is pressed.
+ *
+ * @param selectedImageUri: Uri? – optional URI of the image selected by the user.
+ *      If not null, the image will be displayed.
+ *
+ * @return Unit: renders a vertically centered column layout showing the image (if any) and a back button.
+ */
 @Composable
 fun GalleryPage(onBack: () -> Unit, selectedImageUri: Uri?) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxSize() // Fill the entire screen
+            .background(MaterialTheme.colorScheme.background), // Use theme's background color
+        verticalArrangement = Arrangement.Center, // Center contents vertically
+        horizontalAlignment = Alignment.CenterHorizontally // Center contents horizontally
     ) {
-        Text("Gallery Page",
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground)
-        Spacer(modifier = Modifier.height(16.dp))
+        Text("Gallery Page", // Screen title
+            style = MaterialTheme.typography.headlineLarge, // Use large headline typography from theme
+            color = MaterialTheme.colorScheme.onBackground) // Ensure readable text based on background
+
+        Spacer(modifier = Modifier.height(16.dp)) // Vertical spacing
+
+        // If an image URI is provided, display the image
         selectedImageUri?.let{
             Image(
-                painter = rememberAsyncImagePainter(it),
-                contentDescription = "Selected Image",
+                painter = rememberAsyncImagePainter(it), // Load image from URI asynchronously
+                contentDescription = "Selected Image", // Accessibility label
                 modifier = Modifier
-                    .size(200.dp)
-                    .padding(8.dp)
+                    .size(200.dp) // Fixed size for image preview
+                    .padding(8.dp) // Spacing around image
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Button(onClick = onBack) {
-            Text("Back")
+        Spacer(modifier = Modifier.height(16.dp)) // More vertical spacing
+        Button(onClick = onBack) { // Back button that triggers onBack lambda
+            Text("Back") // Button label
         }
     }
 }
