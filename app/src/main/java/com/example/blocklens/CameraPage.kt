@@ -374,7 +374,24 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
 //**can add more rotation options in the future if screen rotation is made available for our app**
 
 
-//function to detect object and handle results
+/**
+ * detectObjects
+ *
+ * Description: Runs object detection on an image using Google ML Kit’s Object Detection API.
+ * It first converts the image from a URI to a properly rotated bitmap, sets up detection
+ * options, and returns an annotated image along with detected object data. Detection runs
+ * asynchronously and returns results through a callback.
+ *
+ * @param context: Context – context used to access content resolver and initialize detection components.
+ *
+ * @param imageUri: Uri – the URI of the image to analyze for object detection.
+ *
+ * @param onDetectionComplete: (Bitmap, List<DetectedObject>) -> Unit – callback function that receives
+ *      the annotated bitmap and list of detected objects. If detection fails, returns the original bitmap
+ *      and an empty list.
+ *
+ * @return Unit: performs detection and handles results through the provided callback.
+ */
 fun detectObjects(
     context: Context,
     imageUri: Uri,
@@ -406,7 +423,20 @@ fun detectObjects(
     }
 }
 
-//function to display the boxes and labels
+/**
+ * drawBoundingBoxesOnBitmap
+ *
+ * Description: Draws colored bounding boxes and labels over detected objects on a given bitmap.
+ * Each object is outlined with a randomly selected color, and its labels (if any) are drawn inside
+ * a small black box to enhance readability. Useful for visualizing detection results.
+ *
+ * @param bitmap: Bitmap – the base image on which bounding boxes and labels will be drawn.
+ *
+ * @param detectedObjects: List<DetectedObject> – list of objects returned from ML Kit's detector,
+ *      each with a bounding box and optional label(s).
+ *
+ * @return Bitmap: a mutable copy of the input bitmap with drawn rectangles and labels for each detected object.
+ */
 fun drawBoundingBoxesOnBitmap(bitmap: Bitmap, detectedObjects: List<DetectedObject>): Bitmap {
     val mutableBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
     val canvas = Canvas(mutableBitmap)
@@ -523,7 +553,24 @@ fun ImagePopUp(
     }
 }
 
-
+/**
+ * ObjectInfoPopup
+ *
+ * Description: Displays a popup dialog with information about detected objects, including
+ * label names and confidence levels. Optionally speaks the detected information aloud using TTS.
+ *
+ * @Composable: Indicates this is a Jetpack Compose UI component.
+ *
+ * @param detectedObjects: List<DetectedObject> – list of objects detected in the image, each with one or more labels.
+ *
+ * @param onClose: () -> Unit – callback function to close the popup when "Close" is pressed or dialog is dismissed.
+ *
+ * @param tts: TextToSpeech? – optional instance for providing spoken feedback about detected objects.
+ *
+ * @param voiceFeedbackEnabled: Boolean – whether or not TTS voice feedback is active.
+ *
+ * @return Unit: renders a modal dialog showing label names and confidence scores.
+ */
 @Composable
 fun ObjectInfoPopup(
     detectedObjects: List<DetectedObject>,
@@ -598,6 +645,18 @@ fun ObjectInfoPopup(
     )
 }
 
+/**
+ * logExifData
+ *
+ * Description: Logs the EXIF orientation value from a given image URI. Helpful for debugging
+ * issues related to image rotation or orientation in image handling pipelines.
+ *
+ * @param context: Context – application context used to access the content resolver.
+ *
+ * @param uri: Uri – the content URI of the image to inspect.
+ *
+ * @return Unit: logs the orientation value or an error if EXIF data could not be read.
+ */
 fun logExifData(context: Context, uri: Uri) {
     try {
         val inputStream = context.contentResolver.openInputStream(uri)
